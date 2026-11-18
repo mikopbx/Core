@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\Common;
 
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Core\System\SystemMessages;
@@ -432,6 +433,61 @@ abstract class AbstractSaveRecordAction
         }
 
         // POST with custom ID is allowed
+        return null;
+    }
+
+    /**
+     * Validate the ID and extension number of a queue, IVR menu or conference room
+     *
+     * Both values are written verbatim into queues.conf and extensions.conf, so a
+     * client-supplied ID (POST create) or a new extension number must not carry
+     * line breaks or brackets. An unchanged stored extension is accepted when it
+     * is safe to write into configs, so legacy records with short numbers can
+     * still be updated, while a poisoned stored number has to be replaced.
+     *
+     * @param bool $isNewRecord Whether the record is being created
+     * @param mixed $clientId ID supplied in the request for a new record, or null
+     * @param string $idSchemaPattern DialplanEntityIdentity::*_ID_SCHEMA_PATTERN of the resource
+     * @param mixed $extension Extension number from the request, or null when not provided
+     * @param string|null $storedExtension Current extension number of an existing record
+     * @return array|null Error array ['message' => string, 'code' => int] or null if valid
+     */
+    protected static function validateDialplanIdentity(
+        bool $isNewRecord,
+        mixed $clientId,
+        string $idSchemaPattern,
+        mixed $extension,
+        ?string $storedExtension
+    ): ?array {
+        if (
+            $isNewRecord
+            && $clientId !== null
+            && $clientId !== ''
+            && !DialplanEntityIdentity::isValidClientId($clientId, $idSchemaPattern)
+        ) {
+            return [
+                'message' => "ID must match $idSchemaPattern",
+                'code' => 422
+            ];
+        }
+
+        if ($extension === null || $extension === '') {
+            return $isNewRecord
+                ? ['message' => 'Extension number is required', 'code' => 422]
+                : null;
+        }
+
+        $isUnchanged = !$isNewRecord
+            && is_scalar($extension)
+            && (string)$extension === (string)$storedExtension
+            && DialplanEntityIdentity::isConfigSafeExtension($storedExtension);
+        if (!$isUnchanged && !DialplanEntityIdentity::isValidNewExtension($extension)) {
+            return [
+                'message' => 'Extension must be 2-8 digits',
+                'code' => 422
+            ];
+        }
+
         return null;
     }
 }

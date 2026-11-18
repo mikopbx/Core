@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
 use MikoPBX\Common\Models\ConferenceRooms;
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
@@ -219,7 +220,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'id' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cr_id',
-                'pattern' => '^CONFERENCE-[A-Z0-9]{8,32}$',
+                'pattern' => DialplanEntityIdentity::CONFERENCE_ID_SCHEMA_PATTERN,
                 'readOnly' => true,
                 'example' => 'CONFERENCE-ABCD1234'
             ],
@@ -234,7 +235,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cr_extension',
-                'pattern' => '^[0-9]{2,8}$',
+                'pattern' => DialplanEntityIdentity::EXTENSION_SCHEMA_PATTERN,
                 'sanitize' => 'string',
                 'required' => true,
                 'example' => '3000'

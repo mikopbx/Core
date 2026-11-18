@@ -20,9 +20,10 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Core\System\{Processes, Util};
+use MikoPBX\Core\System\{Processes, SystemMessages, Util};
 use MikoPBX\Core\System\Configs\PbxConf;
 
 /**
@@ -140,7 +141,7 @@ class QueueConf extends AsteriskConfigClass
     public function extensionGenInternal(): string
     {
         $queue_ext_conf = '';
-        $db_data        = $this->getQueueData();
+        $db_data        = $this->getQueueData(true);
         foreach ($db_data as $queue) {
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
             $reservedExtension = trim($queue['redirect_to_extension_if_empty'] ?? '');
@@ -252,7 +253,7 @@ class QueueConf extends AsteriskConfigClass
     {
         $q_conf  = '';
 
-        $db_data = $this->getQueueData();
+        $db_data = $this->getQueueData(true);
 
         // Iterate through the queue data
         foreach ($db_data as $queue_data) {
@@ -376,14 +377,28 @@ class QueueConf extends AsteriskConfigClass
     /**
      * Retrieves queue settings.
      *
+     * Queues whose uniqid or extension is unsafe for Asterisk configs are left out.
+     *
+     * @param bool $logSkipped Log skipped queues; set by one caller per generated file.
      * @return array The array containing queue data.
      */
-    public function getQueueData(): array
+    public function getQueueData(bool $logSkipped = false): array
     {
         $arrResult = [];
         $queues    = CallQueues::find();
         foreach ($queues as $queue) {
             $queueUniqId = $queue->uniqid; // Queue identifier
+            // The uniqid and extension are written verbatim into queues.conf and extensions.conf.
+            if (!DialplanEntityIdentity::isConfigSafe($queueUniqId, $queue->extension)) {
+                if ($logSkipped) {
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        'Skipped call queue with an invalid ID or extension: ' . json_encode($queueUniqId),
+                        LOG_WARNING
+                    );
+                }
+                continue;
+            }
 
             $arrAgents = [];
             // Explicit ORDER BY priority (defense-in-depth): linear and

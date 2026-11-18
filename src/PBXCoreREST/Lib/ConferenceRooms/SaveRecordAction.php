@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -78,6 +79,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // Preserve 'id' field before sanitization (it's readOnly and not in rules)
         // WHY: 'id' is response-only in schema but needed for UPDATE/PATCH operations
         $recordId = $data['id'] ?? null;
+        // Keep the raw extension: the schema regex rule would strip it to digits, and
+        // validateDialplanIdentity() must reject malformed input instead (as queues and IVR menus do).
+        $recordExtension = $data['extension'] ?? null;
 
         try {
             $sanitizedData = self::sanitizeInputData(
@@ -89,6 +93,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // Restore 'id' field after sanitization
             if ($recordId !== null) {
                 $sanitizedData['id'] = $recordId;
+            }
+            if ($recordExtension !== null) {
+                $sanitizedData['extension'] = $recordExtension;
             }
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
@@ -132,19 +139,24 @@ class SaveRecordAction extends AbstractSaveRecordAction
             }
         }
 
-        // Extension required only for CREATE operation
-        if ($isNewRecord) {
-            $validationRules['extension'] = [
-                ['type' => 'required', 'message' => 'Extension number is required'],
-                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
-            ];
-        }
-
         // Validate required fields
         $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
             $res->messages['error'] = $validationErrors;
             $res->httpCode = 422;
+            return $res;
+        }
+
+        $identityError = self::validateDialplanIdentity(
+            $isNewRecord,
+            $recordId,
+            DialplanEntityIdentity::CONFERENCE_ID_SCHEMA_PATTERN,
+            $sanitizedData['extension'] ?? null,
+            $room?->extension
+        );
+        if ($identityError) {
+            $res->messages['error'][] = $identityError['message'];
+            $res->httpCode = $identityError['code'];
             return $res;
         }
 

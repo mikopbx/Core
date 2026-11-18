@@ -936,5 +936,100 @@ class TestRequestBodyLimit:
         assert response.get('result') is True, response
 
 
+
+# ============================================================================
+# Queue / IVR / conference identity injection into Asterisk configs
+# ============================================================================
+
+@pytest.mark.security
+class TestDialplanEntityConfigInjection:
+    """
+    The uniqid and extension of call queues, IVR menus and conference rooms are
+    written verbatim into queues.conf / extensions.conf. A client-supplied ID on
+    POST and the extension on create/PUT/PATCH (including the IVR PATCH action)
+    must be rejected when they could carry a line break or a bracket.
+    """
+
+    MARKER = 'RGV3PROBE'
+    RESOURCES = [
+        ('call-queues', 'QUEUE', {'name': 'rgv3 probe'}),
+        ('ivr-menu', 'IVR', {'name': 'rgv3 probe', 'actions': []}),
+        ('conference-rooms', 'CONFERENCE', {'name': 'rgv3 probe'}),
+    ]
+
+    @staticmethod
+    def _send(api_client, method, path, payload):
+        headers = api_client._get_headers()
+        headers['Content-Type'] = 'application/json'
+        return api_client.session.request(
+            method, f'{API_URL}/{path}', headers=headers, json=payload, timeout=30, verify=False,
+        )
+
+    # Regenerate both configs synchronously, so a missing marker proves the injected
+    # value was not stored instead of a reload that has not run yet.
+    REGENERATE_CONFIGS = (
+        "php -r 'require_once \"Globals.php\";"
+        " MikoPBX\\Core\\Asterisk\\Configs\\QueueConf::queueReload();"
+        " MikoPBX\\Core\\Asterisk\\Configs\\ExtensionsConf::reload();' >/dev/null 2>&1; echo rc=$?"
+    )
+
+    def _assert_configs_clean(self, api_client):
+        regenerated = api_client.post('system:executeBashCommand', {'command': self.REGENERATE_CONFIGS})
+        output = regenerated.get('data', {}).get('output', '').strip()
+        assert output == 'rc=0', f'Config regeneration failed: {output}'
+        check = api_client.post('system:executeBashCommand', {
+            'command': f'grep -c {self.MARKER} /etc/asterisk/queues.conf /etc/asterisk/extensions.conf || true'
+        })
+        counts = check.get('data', {}).get('output', '').split()
+        assert len(counts) == 2 and all(line.endswith(':0') for line in counts), counts
+
+    @pytest.mark.parametrize('endpoint,prefix,base', RESOURCES)
+    def test_injected_client_id_rejected(self, api_client, endpoint, prefix, base):
+        payload = dict(base, id=f'{prefix}-ABCD]\n[{self.MARKER}]\n;', extension='2987')
+        response = self._send(api_client, 'POST', endpoint, payload)
+        assert response.status_code == 422, response.text[:300]
+        self._assert_configs_clean(api_client)
+
+    @pytest.mark.parametrize('endpoint,bad_id,base', [
+        ('call-queues', 'QUEUE-NOTHEXID', RESOURCES[0][2]),
+        ('ivr-menu', 'IVR-NOTHEXID', RESOURCES[1][2]),
+        ('conference-rooms', 'CONF-ABCD1234', RESOURCES[2][2]),
+    ])
+    def test_non_routable_client_id_rejected(self, api_client, endpoint, bad_id, base):
+        """An ID the resource's REST route does not match would create an unreachable record."""
+        response = self._send(api_client, 'POST', endpoint, dict(base, id=bad_id, extension='2987'))
+        assert response.status_code == 422, response.text[:300]
+
+    def test_legacy_conference_id_accepted(self, api_client):
+        """The conference route also matches the legacy CONFERENCE-ROOM-xxx form."""
+        record_id = f'CONFERENCE-ROOM-{int(time.time()):X}'
+        default = api_client.get('conference-rooms:getDefault').get('data', {})
+        payload = dict(self.RESOURCES[2][2], id=record_id, extension=default.get('extension'))
+        created = self._send(api_client, 'POST', 'conference-rooms', payload)
+        try:
+            assert created.status_code == 201, created.text[:300]
+            fetched = self._send(api_client, 'GET', f'conference-rooms/{record_id}', None)
+            assert fetched.status_code == 200, fetched.text[:300]
+        finally:
+            api_client.delete(f'conference-rooms/{record_id}')
+
+    @pytest.mark.parametrize('endpoint,prefix,base', RESOURCES)
+    def test_injected_extension_rejected_on_update(self, api_client, endpoint, prefix, base):
+        default = api_client.get(f'{endpoint}:getDefault').get('data', {})
+        created = self._send(api_client, 'POST', endpoint, dict(base, extension=default.get('extension')))
+        assert created.status_code == 201, created.text[:300]
+        record = created.json()['data']
+        injected = f"{record['extension']}\nexten => 2986,1,NoOp({self.MARKER})"
+        try:
+            patch = self._send(api_client, 'PATCH', f"{endpoint}/{record['id']}", {'extension': injected})
+            assert patch.status_code == 422, patch.text[:300]
+            put = self._send(
+                api_client, 'PUT', f"{endpoint}/{record['id']}", dict(base, extension=injected),
+            )
+            assert put.status_code == 422, put.text[:300]
+            self._assert_configs_clean(api_client)
+        finally:
+            api_client.delete(f"{endpoint}/{record['id']}")
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s', '--tb=long'])

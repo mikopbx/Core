@@ -17,19 +17,20 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Common\Models\IvrMenu;
-use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Mvc\Model\Transaction\Manager;
 
 /**
  * Patch (partial update) IVR menu
- * 
- * Updates only specified fields of an existing IVR menu record.
- * Unspecified fields remain unchanged.
- * 
+ *
+ * Merges the provided fields into the stored record and saves it through
+ * SaveRecordAction, so a partial update gets the same sanitization and
+ * validation as create/update (extension, actions, timeout extension) and
+ * keeps the Extensions record in sync. Unspecified fields remain unchanged.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\IvrMenu
  */
 class PatchAction
@@ -44,91 +45,33 @@ class PatchAction
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        
-        try {
-            // Validate required ID
-            if (empty($data['id'])) {
-                $res->messages['error'][] = 'IVR menu ID is required for patch operation';
-                return $res;
-            }
-            
-            // Find existing IVR menu
-            $ivrMenu = IvrMenu::findFirstByUniqid($data['id']);
-            if (!$ivrMenu) {
-                $res->messages['error'][] = 'IVR menu not found: ' . $data['id'];
-                $res->httpCode = 404;
-                return $res;
-            }
-            
-            // Start transaction
-            $transactionManager = new Manager();
-            $transaction = $transactionManager->get();
-            
-            $ivrMenu->setTransaction($transaction);
-            
-            // Update only provided fields
-            $fieldsToUpdate = [
-                'name',
-                'extension',
-                'audio_message_id',
-                'timeout',
-                'timeout_extension',
-                'allow_enter_any_internal_extension',
-                'number_of_repeat',
-                'description'
-            ];
-            
-            foreach ($fieldsToUpdate as $field) {
-                if (array_key_exists($field, $data)) {
-                    $ivrMenu->$field = $data[$field];
-                }
-            }
-            
-            // Save IVR menu
-            if (!$ivrMenu->save()) {
-                $transaction->rollback();
-                $res->messages['error'] = $ivrMenu->getMessages();
-                return $res;
-            }
-            
-            // Update actions if provided
-            if (isset($data['actions']) && is_array($data['actions'])) {
-                // Delete existing actions only if new ones are provided
-                IvrMenuActions::find([
-                    'conditions' => 'ivr_menu_id = :id:',
-                    'bind' => ['id' => $ivrMenu->uniqid]
-                ])->delete();
-                
-                // Add new actions
-                foreach ($data['actions'] as $index => $actionData) {
-                    $action = new IvrMenuActions();
-                    $action->setTransaction($transaction);
-                    $action->ivr_menu_id = $ivrMenu->uniqid;
-                    $action->digits = $actionData['digits'] ?? '';
-                    $action->extension = $actionData['extension'] ?? '';
-                    $action->priority = $index;
-                    
-                    if (!$action->save()) {
-                        $transaction->rollback();
-                        $res->messages['error'] = $action->getMessages();
-                        return $res;
-                    }
-                }
-            }
-            
-            // Commit transaction
-            $transaction->commit();
-            
-            $res->success = true;
-            $res->data = ['id' => $ivrMenu->uniqid];
-            
-        } catch (\Exception $e) {
-            if (isset($transaction)) {
-                $transaction->rollback();
-            }
-            $res->messages['error'][] = $e->getMessage();
+
+        $id = $data['id'] ?? '';
+        if (!is_string($id) || $id === '') {
+            $res->messages['error'][] = 'IVR menu ID is required for patch operation';
+            return $res;
         }
-        
-        return $res;
+
+        if (IvrMenu::findFirstByUniqid($id) === null) {
+            $res->messages['error'][] = 'IVR menu not found';
+            $res->httpCode = 404;
+            return $res;
+        }
+
+        $recordResult = GetRecordAction::main($id);
+        if (!$recordResult->success) {
+            return $recordResult;
+        }
+
+        // Overlay only the provided fields on the stored record
+        $fullData = $recordResult->data;
+        foreach ($data as $key => $value) {
+            if ($key !== 'id' && array_key_exists($key, $fullData)) {
+                $fullData[$key] = $value;
+            }
+        }
+        $fullData['httpMethod'] = 'PATCH';
+
+        return SaveRecordAction::main($fullData);
     }
 }

@@ -19,9 +19,11 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -179,6 +181,8 @@ class ConferenceConf extends AsteriskConfigClass
     /**
      * Retrieves an array of conference extensions.
      *
+     * Extensions unsafe for Asterisk configs are left out (logged by getConferences()).
+     *
      * @return array The array of conference extensions.
      */
     public static function getConferenceExtensions():array
@@ -191,7 +195,9 @@ class ConferenceConf extends AsteriskConfigClass
 
         $conferences = ConferenceRooms::find($filter)->toArray();
         foreach ($conferences as $conference){
-            $confExtensions[] = $conference['extension'];
+            if (DialplanEntityIdentity::isConfigSafeExtension($conference['extension'])) {
+                $confExtensions[] = $conference['extension'];
+            }
         }
         return $confExtensions;
     }
@@ -211,6 +217,15 @@ class ConferenceConf extends AsteriskConfigClass
 
         $conferences = ConferenceRooms::find($filter)->toArray();
         foreach ($conferences as $conference){
+            // The extension is written verbatim into extensions.conf.
+            if (!DialplanEntityIdentity::isConfigSafeExtension($conference['extension'])) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Skipped conference room with an invalid extension: ' . json_encode($conference['extension']),
+                    LOG_WARNING
+                );
+                continue;
+            }
             $confExtensions[$conference['extension']] = $conference['pinCode'];
         }
         return $confExtensions;

@@ -20,8 +20,9 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, Sip, SoundFiles};
-use MikoPBX\Core\System\{Processes, Util};
+use MikoPBX\Core\System\{Processes, SystemMessages, Util};
 
 /**
  * Class IVRConf
@@ -53,7 +54,7 @@ class IVRConf extends AsteriskConfigClass
         }
 
         // Fetch IVR menus from the database
-        $db_data = IvrMenu::find()->toArray();
+        $db_data = $this->getIvrMenus(true);
 
         // Generate internal dial plan.
         $conf = '';
@@ -64,7 +65,8 @@ class IVRConf extends AsteriskConfigClass
             $res           = $audioMessageId === '' ? null : SoundFiles::findFirst($audioMessageId);
             $storedPath    = $res === null ? '' : (string)$res->path;
 
-            $timeout_wait_exten = max($ivr['timeout'], 0);
+            $timeout_wait_exten = max((int)$ivr['timeout'], 0);
+            $numberOfRepeat     = (int)$ivr['number_of_repeat'];
             // Resolve by base name so legacy DB rows (.mp3 path) still play when
             // only the .wav sibling survived the upgrade. Falls back to the
             // built-in 'vm-enter-num-to-call' only when nothing on disk matches.
@@ -81,8 +83,8 @@ class IVRConf extends AsteriskConfigClass
             $conf          .= 'same => n,Gosub(dial_app,${EXTEN},1)' . "\n\t";
             $conf          .= 'same => n,Answer()' . "\n\t";
             $conf          .= 'same => n,Set(try_count=0);' . "\n\t";
-            $conf          .= 'same => n(ivr_start),ExecIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?StopMixMonitor())' . "\n\t";
-            $conf          .= 'same => n,GotoIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
+            $conf          .= 'same => n(ivr_start),ExecIf($[${try_count} > ' . $numberOfRepeat . ']?StopMixMonitor())' . "\n\t";
+            $conf          .= 'same => n,GotoIf($[${try_count} > ' . $numberOfRepeat . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
             $conf          .= "same => n,Background($audio_message) \n\t";
@@ -93,8 +95,23 @@ class IVRConf extends AsteriskConfigClass
             }
 
             // Fetch IVR menu actions from the database
-            $res = IvrMenuActions::find("ivr_menu_id = '{$ivr['uniqid']}'");
+            $res = IvrMenuActions::find([
+                'conditions' => 'ivr_menu_id = :uniqid:',
+                'bind' => ['uniqid' => $ivr['uniqid']],
+            ]);
             foreach ($res as $ext) {
+                // Digits and destination are written verbatim into extensions.conf.
+                if (
+                    !DialplanEntityIdentity::isConfigSafeDigits($ext->digits)
+                    || !DialplanEntityIdentity::isConfigSafeDestination($ext->extension)
+                ) {
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        'Skipped IVR menu action with invalid digits or destination: ' . json_encode($ext->id),
+                        LOG_WARNING
+                    );
+                    continue;
+                }
                 $conf .= "exten => $ext->digits,1," . 'Set(__IVR_DTMF=${IVR_DTMF},' . "$ext->digits)\n";
                 $conf .= "\tsame => n,StopMixMonitor()\n";
                 $conf .= "\tsame => n,Goto(internal,$ext->extension,1)\n";
@@ -123,6 +140,39 @@ class IVRConf extends AsteriskConfigClass
     }
 
     /**
+     * Returns IVR menus whose extension and timeout destination are safe to write into extensions.conf.
+     *
+     * The uniqid is only used as a bound query parameter, so it is not checked here.
+     *
+     * @param bool $logSkipped Log skipped menus; set by one caller per generated file.
+     * @return array<int, array<string, mixed>>
+     */
+    private function getIvrMenus(bool $logSkipped = false): array
+    {
+        $menus = [];
+        foreach (IvrMenu::find()->toArray() as $ivr) {
+            $timeoutExtension = $ivr['timeout_extension'] ?? '';
+            if (
+                !DialplanEntityIdentity::isConfigSafeExtension($ivr['extension'])
+                || ($timeoutExtension !== '' && !DialplanEntityIdentity::isConfigSafeDestination($timeoutExtension))
+            ) {
+                if ($logSkipped) {
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        'Skipped IVR menu with an invalid extension or timeout destination: '
+                        . json_encode($ivr['uniqid']),
+                        LOG_WARNING
+                    );
+                }
+                continue;
+            }
+            $menus[] = $ivr;
+        }
+
+        return $menus;
+    }
+
+    /**
      * Generates the hints.
      *
      * @return string The generated hints.
@@ -130,7 +180,7 @@ class IVRConf extends AsteriskConfigClass
     public function extensionGenHints(): string
     {
         $conf    = '';
-        $db_data = IvrMenu::find()->toArray();
+        $db_data = $this->getIvrMenus();
         foreach ($db_data as $ivr) {
             $conf .= "exten => {$ivr['extension']},hint,Custom:{$ivr['extension']} \n";
         }
@@ -170,7 +220,7 @@ class IVRConf extends AsteriskConfigClass
     public function extensionGenInternal(): string
     {
         $ivr_ext_conf = '';
-        $db_data      = IvrMenu::find()->toArray();
+        $db_data      = $this->getIvrMenus();
         foreach ($db_data as $ivr) {
             $ivr_ext_conf .= "exten => {$ivr['extension']},1,Goto(ivr-{$ivr['extension']},s,1)" . "\n";
         }
@@ -187,7 +237,7 @@ class IVRConf extends AsteriskConfigClass
     public function extensionGenInternalTransfer(): string
     {
         $conf    = '';
-        $db_data = IvrMenu::find()->toArray();
+        $db_data = $this->getIvrMenus();
         foreach ($db_data as $ivr) {
             $conf .= 'exten => _' . $ivr['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";
             $conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . " \n\t";

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
@@ -275,9 +276,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'id' => [
                 'type' => 'string',
                 'description' => 'rest_schema_ivr_id',
-                'pattern' => '^IVR-MENU-[A-Z0-9]+$',
+                'pattern' => DialplanEntityIdentity::IVR_ID_SCHEMA_PATTERN,
                 'readOnly' => true,
-                'example' => 'IVR-MENU-12345'
+                'example' => 'IVR-B52CDA7E'
             ],
             'name' => [
                 'type' => 'string',
@@ -290,7 +291,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_ivr_extension',
-                'pattern' => '^[0-9]{2,8}$',
+                'pattern' => DialplanEntityIdentity::EXTENSION_SCHEMA_PATTERN,
                 'sanitize' => 'string',
                 'required' => true,
                 'example' => '2000'

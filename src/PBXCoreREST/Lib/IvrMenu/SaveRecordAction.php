@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
+use MikoPBX\Common\Library\DialplanEntityIdentity;
 use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\Extensions;
@@ -109,14 +110,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
             ]
         ];
 
-        // Extension required ONLY for CREATE (not for PATCH)
-        if (empty($sanitizedData['id'])) {
-            $validationRules['extension'] = [
-                ['type' => 'required', 'message' => 'Extension number is required'],
-                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
-            ];
-        }
-
         $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
             $res->messages['error'] = $validationErrors;
@@ -154,6 +147,19 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
                 // POST with custom ID allowed for migrations/imports
             }
+        }
+
+        $identityError = self::validateDialplanIdentity(
+            $isNewRecord,
+            $recordId,
+            DialplanEntityIdentity::IVR_ID_SCHEMA_PATTERN,
+            $sanitizedData['extension'] ?? null,
+            $ivrMenu?->extension
+        );
+        if ($identityError) {
+            $res->messages['error'][] = $identityError['message'];
+            $res->httpCode = $identityError['code'];
+            return $res;
         }
 
         if ($isNewRecord) {
