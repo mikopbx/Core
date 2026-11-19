@@ -103,11 +103,91 @@ class UploadFileActionSecurityTest extends TestCase
         ]));
     }
 
-    public function testFirmwareAcceptsMacOsDiskImageMimeType(): void
+    /**
+     * The declared type of an .img file depends on the client OS (#1416), so
+     * firmware must not be refused because of it.
+     *
+     * @dataProvider firmwareBrowserMimeTypeProvider
+     */
+    public function testFirmwareAcceptsAnyBrowserMimeType(string $mimeType): void
     {
-        $this->assertTrue(
-            $this->validate('mikopbx.img', 'application/x-apple-diskimage', 'firmware')['valid']
-        );
+        $this->assertTrue($this->validate('mikopbx.img', $mimeType, 'firmware')['valid']);
+    }
+
+    public static function firmwareBrowserMimeTypeProvider(): array
+    {
+        return [
+            'no type' => [''],
+            'Windows' => ['application/octet-stream'],
+            'macOS' => ['application/x-apple-diskimage'],
+            'shared-mime-info < 2.2' => ['application/x-raw-disk-image'],
+            'shared-mime-info >= 2.2 (Ubuntu 24.04)' => ['application/vnd.efi.img'],
+        ];
+    }
+
+    public function testFirmwareRequiresImgExtension(): void
+    {
+        $this->assertFalse($this->validate('mikopbx.zip', 'application/octet-stream', 'firmware')['valid']);
+        $this->assertFalse($this->validate('mikopbx', 'application/octet-stream', 'firmware')['valid']);
+        $this->assertFalse($this->validate('mikopbx.img.php', 'application/octet-stream', 'firmware')['valid']);
+    }
+
+    /**
+     * Types Linux desktops and Firefox actually send for supported audio
+     * extensions; none of them may refuse the upload.
+     *
+     * @dataProvider soundBrowserMimeTypeProvider
+     */
+    public function testSoundAcceptsOsSpecificMimeTypes(string $filename, string $mimeType): void
+    {
+        $this->assertTrue($this->validate($filename, $mimeType, 'sound')['valid']);
+    }
+
+    public static function soundBrowserMimeTypeProvider(): array
+    {
+        return [
+            'wav, shared-mime-info 2.4' => ['prompt.wav', 'audio/vnd.wave'],
+            'opus, shared-mime-info' => ['prompt.opus', 'audio/x-opus+ogg'],
+            'webm, Firefox' => ['prompt.webm', 'video/webm'],
+            'm4a, Firefox without WMF' => ['prompt.m4a', 'video/mp4'],
+            'aac, legacy alias' => ['prompt.aac', 'audio/x-aac'],
+        ];
+    }
+
+    public function testSoundStillRequiresAudioExtension(): void
+    {
+        $this->assertFalse($this->validate('prompt.txt', 'audio/mpeg', 'sound')['valid']);
+        $this->assertFalse($this->validate('prompt.img', 'audio/mpeg', 'sound')['valid']);
+    }
+
+    /**
+     * libmagic reports audio-only WebM and MP4 (.m4a) as video/webm and
+     * video/mp4; both must pass the post-merge content check.
+     *
+     * @dataProvider audioInVideoContainerProvider
+     */
+    public function testAudioInVideoContainerPassesMagicBytesValidation(string $headerHex): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'upload-test-');
+        file_put_contents($file, hex2bin($headerHex));
+
+        try {
+            $this->assertTrue(UploadFileAction::validateMagicBytes($file, 'sound')['valid']);
+        } finally {
+            unlink($file);
+        }
+    }
+
+    public static function audioInVideoContainerProvider(): array
+    {
+        return [
+            'WebM: EBML header, DocType webm' => [
+                '1a45dfa39f4286810142f7810142f2810442f381084282847765626d4287810442858102',
+            ],
+            'M4A: ftyp mp42/isom, free, moov' => [
+                '00000018667479706d703432000000006d70343269736f6d00000008667265650000000c6d6f6f760000000000',
+            ],
+        ];
     }
 
     public function testInvalidMimeErrorInterpolatesValues(): void

@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
@@ -50,25 +51,16 @@ class UploadFileAction extends Injectable
      */
     private const int UPLOAD_ATTEMPTS_INTERVAL = 300;
 
-    // MIME types allowed for different categories
+    // MIME types allowed for different categories.
+    // null = the category is known but the declared MIME is not checked. The
+    // declared type is whatever the client OS maps the extension to, and these
+    // categories already accepted an empty one, so a whitelist only refused
+    // legitimate uploads (#1416: Linux desktops send application/vnd.efi.img
+    // for .img, audio/vnd.wave for .wav, Firefox sends video/webm for .webm).
+    // Their checks are the extension (AUDIO_EXTENSIONS / FIRMWARE_EXTENSION)
+    // and, for sound, the post-merge magic bytes.
     private const ALLOWED_MIME_TYPES = [
-        'sound' => [
-            // A plain multipart POST (curl, a module) carries no type at all;
-            // the audio extension whitelist and the post-merge magic-byte check
-            // still apply, and the declared MIME is client-supplied regardless.
-            '',
-            'audio/mpeg',
-            'audio/wav',
-            'audio/ogg',
-            'audio/mp4',
-            'audio/aac',
-            'audio/flac',
-            'audio/webm',
-            'audio/x-m4a',
-            'audio/x-wav',
-            'audio/wave',
-            'application/ogg',
-        ],
+        'sound' => null,
         'image' => [
             'image/jpeg',
             'image/png',
@@ -90,14 +82,11 @@ class UploadFileAction extends Injectable
             'application/x-tar',
             'application/x-gzip'
         ],
-        'firmware' => [
-            '',  // Empty MIME type when browser can't detect type for .img files
-            'application/octet-stream',
-            'application/x-apple-diskimage',
-            'application/x-disk-image',
-            'application/x-raw-disk-image'
-        ]
+        'firmware' => null,
     ];
+
+    /** The only extension accepted for the firmware category. */
+    private const FIRMWARE_EXTENSION = 'img';
 
     // Forbidden file extensions (executable files and scripts)
     private const FORBIDDEN_EXTENSIONS = [
@@ -116,7 +105,9 @@ class UploadFileAction extends Injectable
     // Used to validate actual file content (magic bytes) after merge.
     // Categories not listed here skip magic bytes validation (too generic).
     private const MAGIC_BYTES_MIME_PREFIXES = [
-        'sound' => ['audio/', 'application/ogg'],
+        // libmagic reports audio-only WebM and MP4 (.m4a of any ftyp brand)
+        // as video/webm and video/mp4.
+        'sound' => ['audio/', 'application/ogg', 'video/webm', 'video/mp4'],
         'image' => ['image/'],
         'archive' => [
             'application/zip', 'application/x-zip', 'application/gzip',
@@ -170,6 +161,20 @@ class UploadFileAction extends Injectable
         );
 
         if (!$validationResult['valid']) {
+            // Category, type and the error text echo client input: strip
+            // control characters so a crafted value cannot forge log lines,
+            // and cap the length so it cannot bloat the system log.
+            $logMessage = sprintf(
+                'Upload rejected (category "%s", type "%s"): %s',
+                $category,
+                $mimeType,
+                $validationResult['error']
+            );
+            SystemMessages::sysLogMsg(
+                'UploadFile',
+                mb_strimwidth((string)preg_replace('/[\x00-\x1F\x7F]/', ' ', $logMessage), 0, 512, '...'),
+                LOG_WARNING
+            );
             $res->success = false;
             $res->messages['error'] = $validationResult['error'];
             return $res;
@@ -428,7 +433,7 @@ class UploadFileAction extends Injectable
         }
 
         // 2. Check MIME type for category
-        if ($validationCategory !== null && isset(self::ALLOWED_MIME_TYPES[$validationCategory])) {
+        if ($validationCategory !== null && self::ALLOWED_MIME_TYPES[$validationCategory] !== null) {
             if (!in_array($mimeType, self::ALLOWED_MIME_TYPES[$validationCategory], true)) {
                 $error = Util::translate(
                     'sf_UploadInvalidMimeType',
@@ -459,11 +464,18 @@ class UploadFileAction extends Injectable
             ];
         }
 
-        // 3. Special check for .img files (only for firmware)
-        if ($extension === 'img' && $category !== 'firmware') {
+        // 3. .img is accepted only as firmware, and firmware only as .img
+        $isFirmware = $validationCategory === 'firmware';
+        if (($extension === self::FIRMWARE_EXTENSION) !== $isFirmware) {
             return [
                 'valid' => false,
-                'error' => Util::translate('sf_UploadImgOnlyForFirmware', false)
+                'error' => $isFirmware
+                    ? Util::translate(
+                        'sf_UploadInvalidExtensionForCategory',
+                        false,
+                        ['extension' => $extension, 'category' => $category]
+                    )
+                    : Util::translate('sf_UploadImgOnlyForFirmware', false),
             ];
         }
 

@@ -235,11 +235,19 @@ const updatePBX = {
                     percent: parseInt(params.percent, 10),
                 });
                 break;
-            case 'error':
+            case 'error': {
                 updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadError);
                 updatePBX.$submitButton.removeClass('loading');
-                UserMessage.showMultiString(globalTranslate.upd_UploadError);
+                // Resumable.js passes the rejected chunk's response body; show the
+                // server's reason instead of a generic text (#1416)
+                const response = PbxApi.tryParseJSON(params.message);
+                const reason = response && response.messages
+                    && Object.keys(response.messages).length > 0
+                    ? response.messages
+                    : globalTranslate.upd_UploadError;
+                UserMessage.showMultiString(reason, globalTranslate.upd_UploadError);
                 break;
+            }
             default:
         }
     },
