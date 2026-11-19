@@ -220,12 +220,12 @@ class TestCallsBase {
      * @param string $src
      * @param string $dst
      */
-    private function actionOriginateGeneral(string $src, string $dst){
-        self::printInfo("Start originate (general)... $src to $dst");
+    private function actionOriginateGeneral(string $src, string $dst, string $context = 'all_peers'){
+        self::printInfo("Start originate (general)... $src to $dst via $context");
         $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $outgoingDir = dirname($monitorDir) . "/outgoing";
         $conf = "Channel: Local/$src@internal-originate".PHP_EOL.
-            "Context: all_peers".PHP_EOL.
+            "Context: $context".PHP_EOL.
             "Extension: $dst".PHP_EOL.
             "Priority: 1".PHP_EOL.
             "Callerid: $src".PHP_EOL.
@@ -506,7 +506,45 @@ class TestCallsBase {
         if(property_exists(self::class, $dst)){
             $dst = $this->$dst;
         }
-        $this->actionOriginateGeneral($src, $dst);
+        $this->actionOriginateGeneral($src, $dst, $rule[3] ?? 'all_peers');
+    }
+
+    /**
+     * Adds a context to the dialplan of the tested PBX for the duration of a test, e.g. to emulate
+     * the after-answer context of a module originate. It lives in memory only: removePbxContext()
+     * or the next dialplan reload drops it. Arguments must not contain spaces or double quotes,
+     * which the Asterisk CLI would split or strip.
+     *
+     * @param string $context
+     * @param string[] $priorities Applications of extension `_X!`, from priority 1.
+     * @return bool false when the PBX did not load every priority.
+     */
+    public static function addPbxContext(string $context, array $priorities): bool
+    {
+        $asterisk = Util::which(PBX::PROC_NAME);
+        foreach (array_values($priorities) as $index => $app) {
+            $priority = $index + 1;
+            $command = "dialplan add extension _X!,$priority,$app into $context replace";
+            Processes::mwExec("$asterisk -rx " . escapeshellarg($command));
+        }
+        $out = [];
+        Processes::mwExec("$asterisk -rx " . escapeshellarg("dialplan show $context"), $out);
+        $expected = count($priorities) . ' priorit';
+        if (!str_contains(implode("\n", $out), $expected)) {
+            self::printError("PBX context [$context] was not loaded: " . implode(' ', $out));
+            return false;
+        }
+        self::printInfo("PBX context [$context] added");
+        return true;
+    }
+
+    /**
+     * Removes a context added by addPbxContext().
+     */
+    public static function removePbxContext(string $context): void
+    {
+        $asterisk = Util::which(PBX::PROC_NAME);
+        Processes::mwExec("$asterisk -rx " . escapeshellarg("dialplan remove context $context"));
     }
 
     private function invokeWait($rule):void{

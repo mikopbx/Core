@@ -73,6 +73,11 @@ bash tests/Calls/start.sh "" 30
 | 21 | call-A-to-B-attended-B-to-queue-B-leaves-before-retry | Attended transfer to a queue, B leaves in the pause before the retry: the retry rings the agents for A |
 | 22 | call-B-to-A-attended-B-to-queue-B-leaves-before-retry | As 21, but B placed the call: the transferee is found through the queue caller, B's own row ends with B |
 | 23 | call-A-to-B-attended-B-to-C-redirect-C-to-external-B-leaves | Attended transfer to C, 302 to an external number that answers after B left: one A->external row |
+| 24 | originate-A-to-B-pickup-by-A | Originate A->B, A's phone rings and A answers it with `*8A` (push softphone): one A->B row |
+| 25 | originate-A-to-74952293042-pickup-by-A | As 24 to an external number through the test provider |
+| 26 | originate-A-to-B-pickup-by-C | Originate A->B, colleague C takes A's ringing phone with `*8A`: one C->B row |
+| 27 | originate-module-goto-A-to-B-pickup-by-A | As 24 through a CTI / PT1C-style after-answer context that hangs up the originate leg: B is still called |
+| 28 | originate-module-goto-A-to-B | As 07 through the same module-style context, A answers directly |
 
 Test 09 registers `offNum` on the PBX for the duration of the call with `Scripts/hung-phone.php`: a
 contact that answers OPTIONS but never an INVITE (a phone that lost its network after registering). Any
@@ -80,6 +85,13 @@ test whose sample or rules reference `'offNum'` gets it; it unregisters when the
 
 Tests 18-22 use the ring-all queue 2200 with agents C (241) and D (242), created in the test DB
 by `db/updateDb.php`; reference it as `'queueNum'` in samples and as `${QUEUE_NUM}` in dialplans.
+
+Tests 27-28 add the context `calls-test-module-goto` to the tested PBX at runtime
+(`TestCallsBase::addPbxContext()`, removed when the test exits; a dialplan reload drops it too). It
+follows the contract of the module originate contexts (`[miko-cti2-goto]`, `[miko-ajam-goto]`): redirect
+`ORIGINATE_SRC_CHANNEL` to the destination, then hang up unconditionally. Pass it as the fourth element of
+an `ACTION_GENERAL_ORIGINATE` rule. A core originate (`all_peers`) survives a missing
+`ORIGINATE_SRC_CHANNEL` by dialing from the originate leg, so only 27 catches a pickup regression.
 
 A phone that forwards by itself is simulated in the test Asterisk with `Transfer()` on the
 unanswered incoming channel, which answers `302 Moved Temporarily`. Use the endpoint name
@@ -128,7 +140,7 @@ TestCallsBase::executeTest($sampleCDR, $rules);
 ### Rule Actions
 
 - `ACTION_ORIGINATE` — Place call via test Asterisk spool
-- `ACTION_GENERAL_ORIGINATE` — Place call via production PBX spool
+- `ACTION_GENERAL_ORIGINATE` — Place call via production PBX spool (`Local/<src>@internal-originate`; optional 4th element: after-answer context, default `all_peers`)
 - `ACTION_WAIT` — Sleep N seconds
 
 ## Feature Codes
