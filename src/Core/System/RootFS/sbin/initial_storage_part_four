@@ -17,8 +17,20 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Load shell functions for console/serial output
-source /sbin/shell_functions.sh
+# Load shell functions for console/serial output. The embedded copy shipped in
+# pbx_firmware runs in the OLD system's initramfs during an update, where this
+# file may not exist yet (or may not define the functions): busybox ash aborts
+# the whole script on a missing source file. Guard it and fall back to plain
+# echo stubs so the part4 logic itself always runs (#1418). The indirection
+# through a wrapper function keeps shell_functions.sh's trailing dispatcher
+# ("$1" "$2"...) away from this script's <action> <disk> arguments.
+if [ -f /sbin/shell_functions.sh ]; then
+    part4_source_shell_functions() { . /sbin/shell_functions.sh; }
+    part4_source_shell_functions
+    unset -f part4_source_shell_functions
+fi
+command -v echo_info  >/dev/null 2>&1 || echo_info()  { echo "  - $*"; }
+command -v echo_error >/dev/null 2>&1 || echo_error() { echo "ERROR: $*" >&2; }
 
 # Check whether the script has been run with the "create" argument; if not, exit with status code 6
 action="$1"
@@ -269,7 +281,7 @@ if [ "$resultParted" = "0" ];then
         partBytes=$(/bin/busybox blockdev --getsize64 "$partitionFour" 2>/dev/null);
         case "${fsBytes:-x}:${partBytes:-x}" in
           *[!0-9:]*)
-            echo_info "Preserve: could not compare ext4 size with partition size, continuing.";
+            echo_error "Preserve: could not compare ext4 size with partition size (dumpe2fs unavailable on this system?), continuing.";
             ;;
           *)
             if [ "$partBytes" -lt "$fsBytes" ]; then

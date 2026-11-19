@@ -18,7 +18,7 @@
 #
 
 #
-# Regression test for single-disk Storage preservation (GitHub #1077, #1417).
+# Regression test for single-disk Storage preservation (GitHub #1077, #1417, #1418).
 #
 # Replays the pbx_firmware preserve sequence on a sparse loop disk with the
 # geometry from #1417 (500118192 sectors of 512 B, Storage at 1228800s) and runs
@@ -27,6 +27,11 @@
 #   - Storage ending at 500115455 (current fresh install)
 #   - Storage ending at the last usable sector
 #   - ext4 larger than the partition -> must stop with exit 11
+#
+# #1418 delivery check: the same scenarios must also pass through the copy of
+# the script embedded in pbx_firmware, because during a real update that
+# embedded copy — not /sbin/initial_storage_part_four from the OLD initramfs —
+# is what runs.
 #
 # Host usage (needs Docker; the disk stays sparse, a few hundred MB are written):
 #   tests/Core/System/RootFS/part4-preserve-geometry.sh <mikopbx-*-x86_64.img> [docker-image]
@@ -39,6 +44,7 @@ set -u
 
 REPO_ROOT=$(cd "$(dirname "$0")/../../../.." && pwd)
 PART4_SCRIPT=src/Core/System/RootFS/sbin/initial_storage_part_four
+PBX_FIRMWARE=src/Core/System/RootFS/sbin/pbx_firmware
 
 if [ "${1:-}" != "--inside" ]; then
     IMG=${1:-}
@@ -54,6 +60,7 @@ if [ "${1:-}" != "--inside" ]; then
     exec docker run --rm --privileged \
         -v "$IMG:/test/firmware.img:ro" \
         -v "$REPO_ROOT/$PART4_SCRIPT:/sbin/initial_storage_part_four:ro" \
+        -v "$REPO_ROOT/$PBX_FIRMWARE:/test/pbx_firmware:ro" \
         -v "$REPO_ROOT/tests/Core/System/RootFS/part4-preserve-geometry.sh:/test/run.sh:ro" \
         --entrypoint /bin/bash "${2:-$DEFAULT_IMAGE}" /test/run.sh --inside
 fi
@@ -94,9 +101,9 @@ reread() {
     sleep 1
 }
 
-# run_case <name> <original end sector> <extra ext4 blocks> <expected exit code>
+# run_case <name> <original end sector> <extra ext4 blocks> <expected exit code> [script]
 run_case() {
-    local name=$1 origEnd=$2 extraBlocks=$3 expectRc=$4
+    local name=$1 origEnd=$2 extraBlocks=$3 expectRc=$4 script=${5:-/sbin/initial_storage_part_four}
     local loop blocks rc newEnd marker
 
     rm -f "$DISK"
@@ -155,7 +162,7 @@ run_case() {
     /sbin/sgdisk -e "$loop" >/dev/null 2>&1
 
     # The repository keeps rootfs scripts without the exec bit; the build sets it.
-    /bin/sh /sbin/initial_storage_part_four update "$loop" > /tmp/part4.log 2>&1
+    /bin/sh "$script" update "$loop" > /tmp/part4.log 2>&1
     rc=$?
 
     reread "$loop"
@@ -186,9 +193,24 @@ for i in $(seq 0 63); do
     [ -e "/dev/loop$i" ] || mknod "/dev/loop$i" b 7 "$i"
 done
 
+# #1418: extract the script embedded in pbx_firmware the way a consumer of the
+# heredoc would, and prove it is the very copy that will run during a real
+# update — not the (old) /sbin one from the system being upgraded.
+EMBEDDED=/tmp/initial_storage_part_four.embedded
+sed -n "/<<'MIKOPBX_PART4_SCRIPT_EOF'/,/^MIKOPBX_PART4_SCRIPT_EOF$/p" /test/pbx_firmware \
+    | sed '1d;$d' > "$EMBEDDED"
+if cmp -s "$EMBEDDED" /sbin/initial_storage_part_four; then
+    echo "PASS embedded-copy-matches-rootfs-script"
+else
+    echo "FAIL embedded-copy-matches-rootfs-script: heredoc in pbx_firmware differs from initial_storage_part_four"
+    FAILED=1
+fi
+
 run_case "old-installer-layout" 500117503 0 0
 run_case "fresh-install-layout" 500115455 0 0
 run_case "end-at-last-usable" 500118158 0 0
 run_case "ext4-larger-than-partition" 500118158 300 11
+run_case "embedded-old-installer-layout" 500117503 0 0 "$EMBEDDED"
+run_case "embedded-ext4-larger-than-partition" 500118158 300 11 "$EMBEDDED"
 
 exit "$FAILED"

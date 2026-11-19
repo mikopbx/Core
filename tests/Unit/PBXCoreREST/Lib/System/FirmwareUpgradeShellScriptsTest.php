@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
@@ -32,8 +33,17 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $script = file_get_contents(self::ROOTFS_SBIN . '/pbx_firmware');
 
         $this->assertIsString($script);
+        // Assertions about pbx_firmware's own code must ignore the embedded
+        // initial_storage_part_four heredoc: its parted "print free" usage is
+        // legitimate there.
+        $withoutEmbedded = preg_replace(
+            "/<<'MIKOPBX_PART4_SCRIPT_EOF'\n.*?\nMIKOPBX_PART4_SCRIPT_EOF\n/s",
+            '',
+            $script
+        );
+        $this->assertIsString($withoutEmbedded);
         $this->assertStringContainsString('shrink_msdos_part4_for_gpt_backup()', $script);
-        $this->assertStringNotContainsString('print free', $script);
+        $this->assertStringNotContainsString('print free', $withoutEmbedded);
         $this->assertStringContainsString('disk_end_sector=$((disk_sectors - 1))', $script);
         $this->assertStringContainsString('tail_free_sectors=$((disk_end_sector - part4_end_sector))', $script);
         $this->assertStringContainsString('if [ "$tail_free_sectors" -ge "$sectors_in_mib" ]; then', $script);
@@ -126,12 +136,65 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringContainsString('SKIP_SYSTEM_PART4_SETUP=0', $script);
         $this->assertStringContainsString('SKIP_SYSTEM_PART4_SETUP=1', $script);
         $this->assertStringContainsString('if [ "$SKIP_SYSTEM_PART4_SETUP" = "1" ]; then', $script);
-        $this->assertStringContainsString('/sbin/initial_storage_part_four "$part4Action" "$DISK";', $script);
+        $this->assertStringContainsString('/bin/sh "$part4Script" "$part4Action" "$DISK";', $script);
         $this->assertStringContainsString('else', $script);
         $this->assertStringContainsString('part4Result=0', $script);
         $this->assertStringContainsString('Skip system disk part4 setup: Storage is on a separate disk.', $script);
         $this->assertStringNotContainsString('if [ "$SINGLE_DISK_STORAGE" = "1" ]; then' . PHP_EOL
             . '    /sbin/initial_storage_part_four "$part4Action" "$DISK";', $script);
+    }
+
+    /**
+     * GitHub #1418: the upgrade payload is unpacked by the OLD system, which
+     * extracts only firmware_upgrade.sh, pbx_firmware and version — so
+     * /sbin/initial_storage_part_four during an update is the OLD system's
+     * copy, and fixes to it would need a second upgrade to apply.
+     * pbx_firmware must therefore carry the script itself and prefer that
+     * embedded copy.
+     */
+    public function testPbxFirmwareShipsAndRunsEmbeddedPart4Script(): void
+    {
+        $firmware = file_get_contents(self::ROOTFS_SBIN . '/pbx_firmware');
+        $part4 = file_get_contents(self::ROOTFS_SBIN . '/initial_storage_part_four');
+
+        $this->assertIsString($firmware);
+        $this->assertIsString($part4);
+
+        $matched = preg_match(
+            "/<<'MIKOPBX_PART4_SCRIPT_EOF'\n(.*?)\nMIKOPBX_PART4_SCRIPT_EOF\n/s",
+            $firmware,
+            $matches
+        );
+        $this->assertSame(1, $matched, 'pbx_firmware must embed initial_storage_part_four in a heredoc');
+        // Byte-identical to the canonical file (the regex group ends before
+        // the terminator, hence the appended newline) so the two copies cannot
+        // drift apart.
+        $this->assertSame(
+            $part4,
+            $matches[1] . "\n",
+            'The heredoc in pbx_firmware differs from initial_storage_part_four. '
+            . 'Edit the script, then re-embed it between the MIKOPBX_PART4_SCRIPT_EOF markers.'
+        );
+        $this->assertStringStartsWith('#!/bin/sh', $matches[1]);
+
+        // The embedded copy must be preferred, with the old /sbin location
+        // kept only as a fallback when writing the payload fails.
+        $this->assertStringContainsString('writeEmbeddedPart4Script() {', $firmware);
+        $this->assertStringContainsString(
+            'if writeEmbeddedPart4Script "$embeddedPart4Script" '
+            . '&& [ -s "$embeddedPart4Script" ]; then',
+            $firmware
+        );
+        $this->assertStringContainsString('part4Script=/sbin/initial_storage_part_four', $firmware);
+        $this->assertStringContainsString('part4Script="$embeddedPart4Script"', $firmware);
+        $fallback = strpos($firmware, 'part4Script=/sbin/initial_storage_part_four');
+        $prefer = strpos($firmware, 'part4Script="$embeddedPart4Script"');
+        $call = strpos($firmware, '/bin/sh "$part4Script" "$part4Action" "$DISK";');
+        $this->assertIsInt($fallback);
+        $this->assertIsInt($prefer);
+        $this->assertIsInt($call);
+        $this->assertLessThan($prefer, $fallback);
+        $this->assertLessThan($call, $prefer);
     }
 
     public function testPbxMessageSuppressesBrokenConsoleAndSerialWriteErrors(): void
