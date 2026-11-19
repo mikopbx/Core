@@ -267,7 +267,10 @@ class ExtensionsConf extends AsteriskConfigClass
             'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . PHP_EOL . "\t" .
             'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1" && "${ALLOW_MULTY_ANSWER}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
-            'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL.
+            // MASTER_CHANNEL(CHANNEL) here is the originate Local;1 leg; [originate-answer-channel] exports to it.
+            'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},'
+            . 'TtekKHhb(originate-create-channel,${EXTEN},1)'
+            . 'U(originate-answer-channel^${MASTER_CHANNEL(CHANNEL)}),s,1)))' . PHP_EOL .
             'exten => _[hit],1,Gosub(interception_bridge_result,${EXTEN},1)' . PHP_EOL."\t".
             'same => n,Hangup' . PHP_EOL.PHP_EOL.
 
@@ -299,7 +302,10 @@ class ExtensionsConf extends AsteriskConfigClass
             'same => n,Set(orign_chan=${CHANNEL})' . PHP_EOL . "\t" .
             'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(orign_chan=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},DIALEDPEERNAME)}))' . PHP_EOL . "\t" .
-            'same => n,Set(MASTER_CHANNEL(ORIGINATE_SRC_CHANNEL)=${orign_chan})' . PHP_EOL . "\t" .
+            // ARG1 is the originate Local;1 channel, passed by [internal-originate] Dial. With *8 pickup the
+            // answering channel has its own linkedid, so MASTER_CHANNEL would point back to it.
+            'same => n,ExecIf($["${ARG1}x" == "x"]?Set(MASTER_CHANNEL(ORIGINATE_SRC_CHANNEL)=${orign_chan})'
+            . ':Set(EXPORT(${ARG1},ORIGINATE_SRC_CHANNEL)=${orign_chan}))' . PHP_EOL . "\t" .
             'same => n,return' . PHP_EOL . PHP_EOL;
 
         $conf .= '[dial_create_chan]' . " \n";

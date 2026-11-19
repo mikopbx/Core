@@ -185,6 +185,45 @@ class ExtensionsConfTest extends AbstractUnitTest
     }
 
     /**
+     * [internal-originate] passes its originate Local;1 channel to [originate-answer-channel], which
+     * exports ORIGINATE_SRC_CHANNEL to it explicitly: with *8 pickup the answering channel has its own
+     * linkedid, so MASTER_CHANNEL there points back to the answering channel. Queue keeps the old path.
+     *
+     * @backupGlobals disabled
+     */
+    public function testOriginateAnswerChannelExportsToOriginateChannelFromArgument(): void
+    {
+        $method = new ReflectionMethod(ExtensionsConf::class, 'generateOtherExten');
+        $method->setAccessible(true);
+        $conf = '';
+        $method->invokeArgs(new ExtensionsConf(), [&$conf]);
+
+        $section = static function (string $name) use ($conf): string {
+            $start = strpos($conf, "[$name]");
+            self::assertNotFalse($start, "missing [$name]");
+            $end = strpos($conf, "\n[", $start + 1);
+            return substr($conf, $start, $end === false ? null : $end - $start);
+        };
+
+        $this->assertStringContainsString(
+            'U(originate-answer-channel^${MASTER_CHANNEL(CHANNEL)})',
+            $section('internal-originate')
+        );
+
+        $answer = $section('originate-answer-channel');
+        $this->assertStringContainsString(
+            'same => n,ExecIf($["${ARG1}x" == "x"]?Set(MASTER_CHANNEL(ORIGINATE_SRC_CHANNEL)=${orign_chan})'
+            . ':Set(EXPORT(${ARG1},ORIGINATE_SRC_CHANNEL)=${orign_chan}))',
+            $answer
+        );
+        $this->assertStringNotContainsString('same => n,Set(MASTER_CHANNEL(ORIGINATE_SRC_CHANNEL)', $answer);
+
+        $queue = $section('internal-originate-queue');
+        $this->assertStringContainsString(',originate-answer-channel))', $queue);
+        $this->assertStringNotContainsString('originate-answer-channel^', $queue);
+    }
+
+    /**
      * [internal-users] passes the redirect context to [dial_create_chan] when it dials the phone, and
      * the transferer one level down, before the Dial, for a forward during a transfer.
      *
