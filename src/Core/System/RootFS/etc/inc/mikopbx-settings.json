@@ -11,7 +11,7 @@
     "host": "127.0.0.1",
     "port": 4223,
     "httpPort": 8223,
-    "debug": true
+    "debug": false
   },
   "asterisk": {
     "astvarlibdir" : "/offload/asterisk",
@@ -55,7 +55,7 @@
   },
   "core": {
     "debugMode": false,
-    "logsLevel": 7,
+    "logsLevel": 4,
     "cfDir": "/cf",
     "varEtcDir": "/var/etc",
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
@@ -81,7 +81,7 @@
     "combineJS": false
   },
   "sentry": {
-    "environment": "development",
+    "environment": "production",
     "dsn": "https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1"
   }
 }

@@ -52,12 +52,53 @@ class CloudProvisioning
      * from Docker ENV variables. These are written to /etc/inc/mikopbx-settings.json
      * which Redis and Beanstalkd read on startup.
      *
+     * Also switches the shipped production logging to debug on test stands (see applyDebugMode()).
+     *
      * No ORM/Redis dependency — safe to call before any services start.
      */
     public static function applyEarlyOverrides(): void
     {
         if (System::isDocker()) {
             DockerCloud::applyPortOverrides();
+        }
+        self::applyDebugMode();
+    }
+
+    /**
+     * MU-455: images ship in production mode; CI stands opt into debug with
+     * ENV MIKOPBX_DEBUG=1 (Docker) or the flag file /cf/conf/debug-mode (VM, survives upgrade).
+     * Debug: Sentry environment "development", core.logsLevel 7, gnats.debug true.
+     * The state is written both ways and also into mikopbx-settings-orig.json, which
+     * Storage rebuilds the settings from and which persists across Docker restart and on LXC.
+     */
+    private static function applyDebugMode(): void
+    {
+        $debug = getenv('MIKOPBX_DEBUG') === '1' || file_exists('/cf/conf/debug-mode');
+        $wanted = [
+            ['sentry', 'environment', $debug ? 'development' : 'production'],
+            ['core', 'logsLevel', $debug ? 7 : 4],
+            ['gnats', 'debug', $debug],
+        ];
+        foreach (['/etc/inc/mikopbx-settings.json', '/etc/inc/mikopbx-settings-orig.json'] as $path) {
+            $content = file_exists($path) ? file_get_contents($path) : false;
+            $settings = $content === false ? null : json_decode($content, true);
+            if (!is_array($settings)) {
+                continue;
+            }
+            $modified = false;
+            foreach ($wanted as [$section, $key, $value]) {
+                if (($settings[$section][$key] ?? null) !== $value) {
+                    $settings[$section][$key] = $value;
+                    $modified = true;
+                }
+            }
+            $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if ($modified && $json !== false) {
+                file_put_contents($path, $json);
+            }
+        }
+        if ($debug) {
+            SystemMessages::echoToTeletype(PHP_EOL . "   |- Debug mode enabled for this stand");
         }
     }
 

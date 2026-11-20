@@ -6,7 +6,7 @@ there, not here. Repo-wide rules are in the root `AGENTS.md`.
 
 ## Boot ordering (do not move things between phases)
 - `applyEarlyOverrides()` runs from `SystemLoader` before Redis starts. Only file I/O is
-  allowed there (Docker port ENV -> `/etc/inc/mikopbx-settings.json`). It is followed by
+  allowed there (Docker port ENV and the CI debug switch `MIKOPBX_DEBUG=1` or `/cf/conf/debug-mode` -> `/etc/inc/mikopbx-settings.json`; the debug switch also patches `-orig.json`, which Storage rebuilds from). It is followed by
   `ConfigProvider::recreateConfigProvider()`; skipping that leaves the DI config stale (#982).
 - `start()` runs after Redis and before SSH. Docker/LXC "every start" overrides go first
   and may use the ORM; the one-time `provision()` path must stay ORM-free and use the
