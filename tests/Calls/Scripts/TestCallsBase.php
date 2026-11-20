@@ -31,12 +31,15 @@ use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Tests\Calls\Scripts\Interception\ActiveProviderInterception;
 
 require_once 'Globals.php';
+require_once __DIR__ . '/Interception/ActiveProviderInterception.php';
 
 class TestCallsBase {
     public const ACTION_ORIGINATE = 'Originate';
     public const ACTION_GENERAL_ORIGINATE = 'GeneralOriginate';
+    public const ACTION_INTERCEPTION_ORIGINATE = 'InterceptionOriginate';
     public const ACTION_WAIT = 'Wait';
 
     private string $aNum;
@@ -219,22 +222,101 @@ class TestCallsBase {
      * Originate на тестовой станции.
      * @param string $src
      * @param string $dst
+     * @param string $context
+     * @param string $callerName Display name for the originate CallerID (click2call: the name the
+     *                           calling user is shown with). Empty keeps the bare number.
      */
-    private function actionOriginateGeneral(string $src, string $dst, string $context = 'all_peers'){
+    private function actionOriginateGeneral(
+        string $src,
+        string $dst,
+        string $context = 'all_peers',
+        string $callerName = ''
+    ) {
         self::printInfo("Start originate (general)... $src to $dst via $context");
         $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $outgoingDir = dirname($monitorDir) . "/outgoing";
-        $conf = "Channel: Local/$src@internal-originate".PHP_EOL.
-            "Context: $context".PHP_EOL.
-            "Extension: $dst".PHP_EOL.
-            "Priority: 1".PHP_EOL.
-            "Callerid: $src".PHP_EOL.
-            "Setvar: __pt1c_cid=$dst".PHP_EOL;
+        $callerId = $callerName === '' ? $src : '"' . $callerName . '" <' . $src . '>';
+        $conf = "Channel: Local/$src@internal-originate" . PHP_EOL
+            . "Context: $context" . PHP_EOL
+            . "Extension: $dst" . PHP_EOL
+            . "Priority: 1" . PHP_EOL
+            . "Callerid: $callerId" . PHP_EOL
+            . "Setvar: __pt1c_cid=$dst" . PHP_EOL;
 
         $tmpFile     = tempnam('/tmp', 'call');
         file_put_contents($tmpFile,$conf);
         Processes::mwExec("mv $tmpFile $outgoingDir/test.call");
         usleep(500000);
+    }
+
+    /**
+     * Перехват активного звонка провайдера через CTI-originate: Local/<ext>@internal-originate,
+     * который после ответа уходит в [interception-bridge]. origCidName несёт имя исходного
+     * звонящего (так его передаёт 1С), а AMI CallerID — имя оператора, выполняющего перехват.
+     * Имена намеренно разные: строка CDR ноги перехвата обязана взять src_name из origCidName,
+     * а не из CallerID, и dst_name — по ответившему добавочному.
+     *
+     * @param string $targetExt   Добавочный, который перехватывает звонок.
+     * @param string $origCidName Имя исходного звонящего (ожидаемый src_name).
+     * @param string $providerId  Провайдер, чей канал перехватывается.
+     * @param string $callerName  Имя оператора в AMI CallerID (не должно попасть в src_name).
+     * @return bool
+     */
+    private function actionOriginateInterception(
+        string $targetExt,
+        string $origCidName,
+        string $providerId,
+        string $callerName
+    ): bool {
+        self::printInfo("Start interception originate... $providerId channel to $targetExt");
+        $am = Util::getAstManager('off');
+        // The customer call appears only after the general originate is answered, so poll the
+        // tested PBX for its provider channel instead of relying on a fixed wait.
+        $selected = null;
+        for ($attempt = 0; $attempt < 20; $attempt++) {
+            $matches = ActiveProviderInterception::collectChannels($am->GetChannels(), $providerId);
+            if ($matches !== []) {
+                // A looped provider call leaves several channels; the oldest one is the leg the
+                // originate dialed. Any of them exercises the same CDR path, so pick deterministically.
+                usort($matches, static fn (array $a, array $b): int => strcmp($a['linkedid'], $b['linkedid']));
+                $selected = $matches[0];
+                break;
+            }
+            sleep(1);
+        }
+        if ($selected === null) {
+            self::printError("No active channel found for provider '$providerId'");
+            return false;
+        }
+
+        $callerNumber = trim((string)$am->GetVar($selected['channel'], 'CALLERID(num)', null, false));
+        $request = ActiveProviderInterception::buildOriginateRequest(
+            $selected,
+            $targetExt,
+            $callerNumber,
+            $origCidName,
+            $callerName
+        );
+        self::printInfo("Intercept {$selected['channel']} (caller $callerNumber) as {$request['callerId']}");
+        $response = $am->Originate(
+            $request['channel'],
+            $request['exten'],
+            $request['context'],
+            $request['priority'],
+            null,
+            null,
+            null,
+            $request['callerId'],
+            $request['variables'],
+            null,
+            true
+        );
+        if (($response['Response'] ?? '') !== 'Success') {
+            self::printError('Interception originate failed: ' . json_encode($response));
+            return false;
+        }
+        usleep(500000);
+        return true;
     }
 
     /**
@@ -506,7 +588,30 @@ class TestCallsBase {
         if(property_exists(self::class, $dst)){
             $dst = $this->$dst;
         }
-        $this->actionOriginateGeneral($src, $dst, $rule[3] ?? 'all_peers');
+        $this->actionOriginateGeneral($src, $dst, $rule[3] ?? 'all_peers', $rule[4] ?? '');
+    }
+
+    /**
+     * CTI-перехват активного звонка на тестируемой АТС.
+     * Правило: [ACTION_INTERCEPTION_ORIGINATE, targetExt, origCidName, channelOwner, callerName],
+     * где channelOwner — uniqid провайдера, '*' (любой провайдер) или добавочный, чей канал
+     * перехватывается.
+     * @param array $rule
+     * @throws \Exception
+     */
+    private function invokeInterceptionOriginate(array $rule): void
+    {
+        [$action, $targetExt, $origCidName, $channelOwner] = $rule;
+        if ($action !== self::ACTION_INTERCEPTION_ORIGINATE) {
+            return;
+        }
+        if (property_exists(self::class, $targetExt)) {
+            $targetExt = $this->$targetExt;
+        }
+        if (property_exists(self::class, $channelOwner)) {
+            $channelOwner = $this->$channelOwner;
+        }
+        $this->actionOriginateInterception($targetExt, $origCidName, $channelOwner, $rule[4] ?? '');
     }
 
     /**

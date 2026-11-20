@@ -397,9 +397,24 @@ class ActionDialAnswer
         if (!empty($srcChan)) {
             try {
                 $am = Util::getAstManager('off');
-                $connectedName = $am->GetVar($srcChan, 'CONNECTEDLINE(name)', null, false);
-                if (is_string($connectedName) && $connectedName !== '' && $connectedName !== $row->dst_num) {
-                    $row->writeAttribute('dst_name', strip_tags($connectedName));
+                $isInterception = (string)($data['is_interception'] ?? '');
+                if (InterceptionBridgeLegPolicy::prefersResolvedDstName($row, $isInterception)) {
+                    // Answered interception leg: CONNECTEDLINE(name) still names the party the
+                    // call was ringing before the interception, not the operator who answered.
+                    // lua event_dial_interception() resolves the answering endpoint's name
+                    // in-channel (no query); the DB lookup is only a fallback for events
+                    // without it.
+                    if (empty($row->dst_name)) {
+                        $resolvedName = Extensions::getCidByPhoneNumber((string)$row->dst_num);
+                        if (is_string($resolvedName) && $resolvedName !== '' && $resolvedName !== $row->dst_num) {
+                            $row->writeAttribute('dst_name', strip_tags($resolvedName));
+                        }
+                    }
+                } else {
+                    $connectedName = $am->GetVar($srcChan, 'CONNECTEDLINE(name)', null, false);
+                    if (is_string($connectedName) && $connectedName !== '' && $connectedName !== $row->dst_num) {
+                        $row->writeAttribute('dst_name', strip_tags($connectedName));
+                    }
                 }
                 if (empty($row->src_name)) {
                     $callerName = $am->GetVar($srcChan, 'CALLERID(name)', null, false);

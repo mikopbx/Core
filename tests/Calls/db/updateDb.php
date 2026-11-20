@@ -34,6 +34,18 @@ foreach (ExtensionForwardingRights::find(['extension IN ({ext:array})', 'bind' =
     $row->save();
 }
 
+// Give the test phones a display name distinct from their number: the CDR name fields are
+// filled from the endpoint callerid, so with callerid == number every src_name/dst_name would
+// be empty and the name tests (29, 30) would have nothing to assert. The name carries the
+// number, so a scenario can predict it for whichever peer it was handed.
+foreach (Extensions::find(['type = :type:', 'bind' => ['type' => Extensions::TYPE_SIP]]) as $extension) {
+    $expected = 'Абонент ' . $extension->number;
+    if ($extension->callerid !== $expected) {
+        $extension->callerid = $expected;
+        $extension->save();
+    }
+}
+
 // Tests 18+ transfer to this ring-all queue; C (241) and D (242) are its agents.
 $queueNumber = '2200';
 if (CallQueues::findFirst(['extension = :ext:', 'bind' => ['ext' => $queueNumber]]) === null) {
@@ -65,7 +77,7 @@ if (CallQueues::findFirst(['extension = :ext:', 'bind' => ['ext' => $queueNumber
     }
 }
 
-SIPConf::reload();;
+SIPConf::reload();
 ExtensionsConf::reload();
 ManagerConf::reload();
 ModulesConf::reload();

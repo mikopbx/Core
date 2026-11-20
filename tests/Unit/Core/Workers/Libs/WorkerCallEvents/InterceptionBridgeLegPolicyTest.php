@@ -38,6 +38,36 @@ final class InterceptionBridgeLegPolicyTest extends TestCase
         self::assertFalse(InterceptionBridgeLegPolicy::endsOnTransfereeRedial($operatorTransfer, ''));
     }
 
+    public function testInterceptionLegPrefersResolvedDestinationName(): void
+    {
+        $row = $this->interceptionRow();
+
+        self::assertTrue(InterceptionBridgeLegPolicy::prefersResolvedDstName($row));
+    }
+
+    public function testRegularLegsKeepConnectedLineDestinationName(): void
+    {
+        $regular = $this->interceptionRow();
+        $regular->dst_chan = 'PJSIP/236-000000a2';
+        $noSource = $this->interceptionRow();
+        $noSource->src_chan = '';
+
+        self::assertFalse(InterceptionBridgeLegPolicy::prefersResolvedDstName($regular));
+        self::assertFalse(InterceptionBridgeLegPolicy::prefersResolvedDstName($noSource));
+    }
+
+    public function testOptimizedAwayInterceptionIsRecognisedByFlag(): void
+    {
+        // Asterisk optimizes the Local pair away after answer: the leg then runs on the plain
+        // endpoint channel, so only the flag from event_dial_answer() identifies it.
+        $optimized = $this->interceptionRow();
+        $optimized->dst_chan = 'PJSIP/241-0000000d';
+
+        self::assertTrue(InterceptionBridgeLegPolicy::prefersResolvedDstName($optimized, '1'));
+        self::assertFalse(InterceptionBridgeLegPolicy::prefersResolvedDstName($optimized));
+        self::assertFalse(InterceptionBridgeLegPolicy::prefersResolvedDstName($optimized, '0'));
+    }
+
     private function interceptionRow(): object
     {
         return (object)[

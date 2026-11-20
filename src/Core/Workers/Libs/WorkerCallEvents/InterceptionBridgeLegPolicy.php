@@ -51,4 +51,30 @@ final class InterceptionBridgeLegPolicy
             && (string)($row->endtime ?? '') === ''
             && str_contains((string)($row->dst_chan ?? ''), '@internal-originate');
     }
+
+    /**
+     * Whether an answered leg must take its destination name from the interception
+     * itself instead of the A-leg CONNECTEDLINE(name).
+     *
+     * On a call interception the A-leg CONNECTEDLINE still names the party the call
+     * was ringing before the interception, while the leg's dst_* already point to the
+     * operator who intercepted. Overwriting dst_name from CONNECTEDLINE would show
+     * the intercepted party for the answering operator's leg. lua
+     * event_dial_interception() resolves the answering endpoint's name into the row;
+     * when it could not, the caller falls back to a dst_num lookup.
+     *
+     * @param object $row             The answered CDR leg.
+     * @param string $isInterception  Flag from event_dial_answer(). Asterisk optimizes the Local
+     *                                pair away after answer, so the leg may run on a plain
+     *                                endpoint channel whose dst_chan no longer identifies it.
+     */
+    public static function prefersResolvedDstName(object $row, string $isInterception = ''): bool
+    {
+        if ((string)($row->src_chan ?? '') === '') {
+            return false;
+        }
+
+        return $isInterception === '1'
+            || str_contains((string)($row->dst_chan ?? ''), '@internal-originate');
+    }
 }

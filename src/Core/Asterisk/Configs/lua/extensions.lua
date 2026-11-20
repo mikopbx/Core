@@ -138,6 +138,32 @@ function getCallerIdName(number)
 end
 
 --[[
+    Retrieves the original caller's display name for a CDR leg whose source is the
+    caller of an intercepted call (interception originate / interception bridge).
+
+    The two halves of the interception Local channel diverge: the half executing
+    [internal-originate] gets CALLERID(name) overridden from ${origCidName} (the CTI
+    client's name for the original caller), while the half running [interception-bridge]
+    keeps the AMI Originate CallerID - the name of the operator who initiated the
+    interception. Reading CALLERID(name) on the wrong half attributes the operator's
+    name to the external caller in the CDR, so prefer ${origCidName} there.
+
+    Parameters:
+    - number (string): The original caller number (src_num of the leg).
+
+    Returns:
+    - The display name, or the getCallerIdName() fallback when origCidName is
+      absent, equals the number or is digits-only.
+]]
+function getOrigCidName(number)
+    local name = get_variable("origCidName");
+    if (name == '' or name == number or name:match('^%d+$')) then
+        return getCallerIdName(number);
+    end
+    return name;
+end
+
+--[[
     Retrieves the SIP Call-ID for the source channel.
 
     Priority:
@@ -579,6 +605,16 @@ function event_interception_start()
     data['action']       = "dial";
     data['action_extra'] = "originate_start";
 
+    -- Carry the original caller's name down to the answering endpoint. [internal-originate]
+    -- applies origCidName to CALLERID(name) of this Local half only, and Asterisk optimizes the
+    -- Local pair away after answer: the interception then runs on the endpoint channel, which
+    -- keeps neither that CALLERID nor plain channel variables. Inheriting it keeps the name
+    -- available to event_dial_interception() in both shapes.
+    local origCidName = get_variable("origCidName");
+    if(origCidName ~= '')then
+        set_variable("__origCidName", origCidName);
+    end
+
     data['UNIQUEID']     = get_variable('UNIQUEID')..'_'..generateRandomString(6)
     set_variable("__int_UNIQUEID", data['UNIQUEID']);
 
@@ -601,7 +637,7 @@ function event_interception_start()
         data['from_account'] = from_account;
         data['src_chan']  	 = data['int_channel'];
         data['src_num']  	 = get_variable("pt1c_cid");
-        data['src_name']     = getCallerIdName(data['src_num']);
+        data['src_name']     = getOrigCidName(data['src_num']);
         data['dst_num']  	 = get_variable("number");
         data['dialstatus']   = 'ORIGINATE_TRY_INTERCEPTION';
         data['appname']  	 = 'interception';
@@ -825,8 +861,22 @@ function event_dial_interception()
     data['linkedid']  	 = OLD_LINKEDID;
     data['src_chan'] 	 = interceptionChannel;
     data['src_num']  	 = src_num;
-    data['src_name']     = getCallerIdName(src_num);
+    data['src_name']     = getOrigCidName(src_num);
     data['dst_num']  	 = dst_num;
+    -- The A-leg CONNECTEDLINE still names the party the call was ringing before the
+    -- interception, so resolve the answering endpoint's own display name here, in
+    -- channel and without AMI/DB (same source dial_create_chan uses). dst_num is the
+    -- answering extension number, which is also the base endpoint name even when a
+    -- <ext>-WS device answered.
+    if(dst_num ~= '')then
+        local endpoint_cid = get_variable("PJSIP_ENDPOINT(" .. dst_num .. ",callerid)");
+        if(endpoint_cid ~= '')then
+            local dst_name = endpoint_cid:match('"([^"]+)"');
+            if(dst_name and dst_name ~= '' and dst_name ~= dst_num)then
+                data['dst_name'] = dst_name;
+            end
+        end
+    end
     data['UNIQUEID']  	 = id;
     data['transfer']  	 = '0';
     data['agi_channel']  = agi_channel;
@@ -848,6 +898,10 @@ function event_dial_interception()
 
     -- Set the unique ID as a variable for further use
     set_variable("__pt1c_UNIQUEID", id);
+    -- Mark the leg for event_dial_answer(): Asterisk may optimize the Local pair away, leaving the
+    -- interception to run on a plain endpoint channel whose dst_chan no longer says
+    -- @internal-originate. Without this flag the answer handler cannot tell it from a normal call.
+    set_variable("__pt1c_interception", '1');
 
     -- Send a user event with the call information
     userevent_return(data)
@@ -1058,6 +1112,9 @@ function event_dial_answer()
 
     data['ENDCALLONANSWER']= get_variable("ENDCALLONANSWER");
     data['BRIDGEPEER']     = get_variable("FROM_CHAN");
+    -- Set by event_dial_interception() on the leg that took the call over. Survives Local
+    -- optimization, unlike dst_chan, so the answer handler still recognises an interception.
+    data['is_interception'] = get_variable("pt1c_interception");
 
     local IS_ORGNT   = get_variable("IS_ORGNT");
     if(IS_ORGNT ~= '')then

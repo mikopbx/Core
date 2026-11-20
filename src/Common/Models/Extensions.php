@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Library\ExtensionsNumberMatcher;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Di\Di;
 use Phalcon\Mvc\Model\Relation;
@@ -137,7 +138,7 @@ class Extensions extends ModelsBase
 
     /**
      * Get all system extension numbers from database with caching
-     * 
+     *
      * @return array Array of system extension numbers
      */
     public static function getSystemExtensions(): array
@@ -146,9 +147,9 @@ class Extensions extends ModelsBase
         if ($di === null) {
             return [];
         }
-        
+
         $cacheKey = 'Models:Extensions:SystemExtensions';
-        
+
         // Try to get from cache first
         if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
             $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
@@ -157,25 +158,25 @@ class Extensions extends ModelsBase
                 return $cached;
             }
         }
-        
+
         // Load from database
         $systemExtensions = self::find([
             'conditions' => 'type = :type:',
             'bind' => ['type' => self::TYPE_SYSTEM],
             'columns' => 'number'
         ]);
-        
+
         $result = [];
         foreach ($systemExtensions as $extension) {
             $result[] = $extension->number;
         }
-        
+
         // Save to cache
         if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
             $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
             $managedCache->set($cacheKey, $result, 3600); // Cache for 1 hour
         }
-        
+
         return $result;
     }
 
@@ -214,21 +215,27 @@ class Extensions extends ModelsBase
             return $number;
         }
         $number = preg_replace('/\D+/', '', $number);
-        $extensionLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
-        if (strlen($number) > $extensionLength) {
-            $query = 'number LIKE :phone:';
-            $phone = '%' . substr($number, -9);
-        } else {
-            $query = 'number = :phone:';
-            $phone = $number;
+        $seekNumbers = ExtensionsNumberMatcher::candidateNumbers((string)$number);
+        if ($seekNumbers === []) {
+            return $number;
         }
-        $filter = [
-            $query,
-            'columns' => 'callerid',
-            'bind' => [
-                'phone' => $phone
-            ]
-        ];
+        if (count($seekNumbers) === 1) {
+            $filter = [
+                'number = :phone:',
+                'columns' => 'callerid',
+                'bind' => [
+                    'phone' => $seekNumbers[0]
+                ]
+            ];
+        } else {
+            $filter = [
+                'number IN ({phone:array})',
+                'columns' => 'callerid',
+                'bind' => [
+                    'phone' => $seekNumbers
+                ]
+            ];
+        }
         $data = self::findFirst($filter);
         if ($data) {
             $cid = $data->callerid;
@@ -477,7 +484,8 @@ class Extensions extends ModelsBase
                 'alias' => 'ExtensionForwardingRights',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action' => Relation::ACTION_CASCADE, // ExtensionForwardingRights is always deleted through its Extension
+                    // ExtensionForwardingRights is always deleted through its Extension
+                    'action' => Relation::ACTION_CASCADE,
                 ],
             ]
         );
@@ -568,7 +576,7 @@ class Extensions extends ModelsBase
     /**
      * Override delete to check ALL dependencies first before Phalcon does partial check
      * This ensures all constraint violations are shown at once, not just the first one
-     * 
+     *
      * @return bool True if deletion succeeded, false otherwise
      */
     public function delete(): bool
@@ -576,22 +584,22 @@ class Extensions extends ModelsBase
         // First, manually check ALL dependencies before Phalcon does its partial check
         $allBlockingDependencies = [];
         $relations = $this->getModelsManager()->getRelations(get_class($this));
-        
+
         foreach ($relations as $relation) {
             $foreignKey = $relation->getOption('foreignKey') ?? [];
-            
+
             // Only check relations with ACTION_RESTRICT
             if (!isset($foreignKey['action']) || $foreignKey['action'] !== Relation::ACTION_RESTRICT) {
                 continue;
             }
-            
+
             // Get related model and fields
             $relatedModel = $relation->getReferencedModel();
             $mappedFields = $relation->getFields();
             $mappedFields = is_array($mappedFields) ? $mappedFields : [$mappedFields];
             $referencedFields = $relation->getReferencedFields();
             $referencedFields = is_array($referencedFields) ? $referencedFields : [$referencedFields];
-            
+
             // Build query parameters
             $conditions = [];
             $bind = [];
@@ -600,13 +608,13 @@ class Extensions extends ModelsBase
                 $bindField = $mappedFields[$index];
                 $bind["field$index"] = $this->$bindField;
             }
-            
+
             // Find related records that would block deletion
             $relatedRecords = $relatedModel::find([
                 'conditions' => implode(' OR ', $conditions),
                 'bind' => $bind
             ]);
-            
+
             // Add to blocking dependencies
             foreach ($relatedRecords as $relatedRecord) {
                 // Skip if it's the same record we're trying to delete
@@ -616,28 +624,28 @@ class Extensions extends ModelsBase
                 $allBlockingDependencies[] = $relatedRecord;
             }
         }
-        
+
         // If we have blocking dependencies, create comprehensive error message
         if (!empty($allBlockingDependencies)) {
             // Build comprehensive HTML message with ALL dependencies
             $htmlMessage = '<div class="ui header">' . $this->t('ConstraintViolation') . '</div>';
             $htmlMessage .= '<ul class="list">';
-            
+
             foreach ($allBlockingDependencies as $dependency) {
                 if ($dependency instanceof ModelsBase) {
                     $htmlMessage .= '<li>' . $dependency->getRepresent(true) . '</li>';
                 }
             }
-            
+
             $htmlMessage .= '</ul>';
-            
+
             // Add the comprehensive error message
             $message = new Message($htmlMessage, 'ConstraintViolation', 'number');
             $this->appendMessage($message);
-            
+
             return false; // Prevent deletion and don't call parent
         }
-        
+
         // If no blocking dependencies, proceed with normal deletion
         return parent::delete();
     }
@@ -709,15 +717,15 @@ class Extensions extends ModelsBase
         }
 
         $validation = new Validation();
-        
+
         // Build exception conditions for uniqueness check
         $exceptConditions = [];
-        
+
         // Always exclude current record by ID if it exists
         if (!empty($this->id)) {
             $exceptConditions['id'] = $this->id;
         }
-        
+
         // Check for user general extension uniqueness
         // Each user should have only one general extension per type
         if (!empty($this->userid) && $this->is_general_user_number === "1") {
@@ -729,7 +737,7 @@ class Extensions extends ModelsBase
                     'id' => $this->id ?: 0
                 ]
             ]);
-            
+
             if ($conflictingGeneral) {
                 $this->appendMessage(
                     new Message(
@@ -742,7 +750,7 @@ class Extensions extends ModelsBase
                 return false;
             }
         }
-        
+
         // For updates: if we have a userid, allow same user to have multiple extensions
         // (one SIP, one EXTERNAL) but prevent true duplicates
         if (!empty($this->userid) && $existingRecord && $existingRecord->userid === $this->userid) {

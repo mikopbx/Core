@@ -439,10 +439,12 @@ Object.assign(ExtensionsAPI, {
                 const cdrName = $(el).attr('data-cdr-name');
                 if (ExtensionsAPI.isUsableCdrName(cdrName, number)
                     && represent.indexOf('cdr-caller-name') === -1) {
-                    // CDR name available but cache doesn't have styled format — (re)build it
+                    // CDR name available but cache doesn't have styled format — (re)build it.
+                    // The enriched HTML goes to the DOM only: caching it would pin one row's
+                    // CDR name onto every other row showing the same number.
                     const enriched = ExtensionsAPI.buildCdrNameHtml(cdrName, number);
                     $(el).html(enriched);
-                    sessionStorage.setItem(number, enriched);
+                    sessionStorage.setItem(number, number);
                 } else {
                     $(el).html(represent);
                 }
@@ -482,8 +484,11 @@ Object.assign(ExtensionsAPI, {
                     let represent = Array.isArray(apiResult.represent)
                         ? apiResult.represent[0] || number
                         : apiResult.represent;
-                    // If API returned just the plain number (external/unknown),
-                    // try CDR caller name as enrichment
+                    // Only the API answer is cacheable. When it is just the plain number
+                    // (external/unknown), the CDR caller name enriches the DOM for this row
+                    // alone — the enriched HTML is never cached, so each row renders its own
+                    // CDR name instead of the first row's one.
+                    const cacheable = represent;
                     if (represent === number) {
                         const cdrName = $(el).attr('data-cdr-name');
                         if (ExtensionsAPI.isUsableCdrName(cdrName, number)) {
@@ -491,14 +496,13 @@ Object.assign(ExtensionsAPI, {
                         }
                     }
                     $(el).html(represent);
-                    sessionStorage.setItem(number, represent);
+                    sessionStorage.setItem(number, cacheable);
                 } else {
-                    // Number not in API response at all — try CDR name
+                    // Number not in API response at all — try CDR name (DOM only, no caching)
                     const cdrName = $(el).attr('data-cdr-name');
                     if (ExtensionsAPI.isUsableCdrName(cdrName, number)) {
                         const enriched = ExtensionsAPI.buildCdrNameHtml(cdrName, number);
                         $(el).html(enriched);
-                        sessionStorage.setItem(number, enriched);
                     }
                 }
                 $(el).removeClass(htmlClass);

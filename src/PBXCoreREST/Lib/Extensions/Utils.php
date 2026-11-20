@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,6 +20,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
+use MikoPBX\Common\Library\ExtensionsNumberMatcher;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
@@ -31,7 +33,6 @@ use Phalcon\Di\Injectable;
  */
 class Utils extends Injectable
 {
-
     /**
      * Retrieves the view for the phone numbers list via AJAX request.
      *
@@ -70,25 +71,19 @@ class Utils extends Injectable
 
         $response = $phoneNumber;
 
-        if (strlen($phoneNumber) > 10) {
-            $seekNumber = substr($phoneNumber, -9);
-            $parameters = [
-                'conditions' => 'number LIKE :SearchPhrase1:',
-                'bind' => [
-                    'SearchPhrase1' => "%$seekNumber",
-                ],
-            ];
-        } else {
-            $parameters = [
-                'conditions' => 'number = :SearchPhrase1:',
-                'bind' => [
-                    'SearchPhrase1' => $phoneNumber,
-                ],
-            ];
-        }
-        $result = Extensions::findFirst($parameters);
-        if ($result !== null) {
-            $response = $result->getRepresent();
+        $seekNumbers = ExtensionsNumberMatcher::candidateNumbers($phoneNumber);
+        if ($seekNumbers !== []) {
+            $result = Extensions::findFirst(
+                [
+                    'conditions' => 'number IN ({seekNumbers:array})',
+                    'bind' => [
+                        'seekNumbers' => $seekNumbers,
+                    ],
+                ]
+            );
+            if ($result !== null) {
+                $response = $result->getRepresent();
+            }
         }
         $res->data[] = $response;
 
@@ -112,7 +107,7 @@ class Utils extends Injectable
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
             $res->data['available'] = false;
-            switch ($extension->type){
+            switch ($extension->type) {
                 case Extensions::TYPE_SIP:
                 case Extensions::TYPE_EXTERNAL:
                     $res->data['userId'] = $extension->userid;
@@ -130,5 +125,4 @@ class Utils extends Injectable
         }
         return $res;
     }
-
 }

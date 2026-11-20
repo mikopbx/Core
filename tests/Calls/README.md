@@ -78,6 +78,8 @@ bash tests/Calls/start.sh "" 30
 | 26 | originate-A-to-B-pickup-by-C | Originate A->B, colleague C takes A's ringing phone with `*8A`: one C->B row |
 | 27 | originate-module-goto-A-to-B-pickup-by-A | As 24 through a CTI / PT1C-style after-answer context that hangs up the originate leg: B is still called |
 | 28 | originate-module-goto-A-to-B | As 07 through the same module-style context, A answers directly |
+| 29 | originate-interception-cid-name | CTI interception of a ringing call: `origCidName` names the caller, the AMI CallerID names the operator. Asserts the leg's `src_name`/`dst_name` do not swap the two |
+| 30 | originate-A-to-B-cid-name | click2call (07) with a CallerID name: asserts the leg's `src_name`/`dst_name` come from the answering phones' endpoint callerid |
 
 Test 09 registers `offNum` on the PBX for the duration of the call with `Scripts/hung-phone.php`: a
 contact that answers OPTIONS but never an INVITE (a phone that lost its network after registering). Any

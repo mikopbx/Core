@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
@@ -41,24 +42,26 @@ class ExtensionsInterception extends AsteriskConfigClass
      */
     public function extensionGenContexts(): string
     {
-        return  '[interception-bridge]' . PHP_EOL.
-                'exten => failed,1,Hangup()' . PHP_EOL.
-                'exten => _[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!,1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL."\t".
-                'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL."\t".
-                'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL."\t".
-                'same => n,ExecIf($[ "${CHANNEL_EXISTS(${INTECEPTION_CNANNEL})}" != "1" ]?Hangup())' . PHP_EOL."\t".
-                // Need to check the value of M_DIALSTATUS in the INTECEPTION_CNANNEL channel
-                // If the call is answered, interception should not be performed.
-                'same => n,Set(M_DIALSTATUS=${IMPORT(${INTECEPTION_CNANNEL},M_DIALSTATUS)})'.PHP_EOL."\t".
-                'same => n,ExecIf($[ "${M_DIALSTATUS}" == "ANSWER" ]?Hangup())'.PHP_EOL."\t".
-                'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . PHP_EOL."\t".
-                'same => n,Set(FROM_CHAN=${INTECEPTION_CNANNEL})' . PHP_EOL."\t".
-                'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${INTECEPTION_CNANNEL})' . PHP_EOL."\t".
-                'same => n,Gosub(set-answer-state,${EXTEN},1)' . PHP_EOL."\t".
-                'same => n,Gosub(dial_interception,${EXTEN},1)' . PHP_EOL."\t".
-                'same => n,Gosub(dial_answer,${EXTEN},1)' . PHP_EOL."\t".
-                'same => n,Bridge(${INTECEPTION_CNANNEL},Tk)' . PHP_EOL."\t".
-                'same => n,Hangup()' . PHP_EOL;
+        return '[interception-bridge]' . PHP_EOL
+            . 'exten => failed,1,Hangup()' . PHP_EOL
+            . 'exten => _[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!,1,'
+            . 'ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL . "\t"
+            . 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?'
+            . 'ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL . "\t"
+            . 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL . "\t"
+            . 'same => n,ExecIf($[ "${CHANNEL_EXISTS(${INTECEPTION_CNANNEL})}" != "1" ]?Hangup())' . PHP_EOL . "\t"
+            // Need to check the value of M_DIALSTATUS in the INTECEPTION_CNANNEL channel
+            // If the call is answered, interception should not be performed.
+            . 'same => n,Set(M_DIALSTATUS=${IMPORT(${INTECEPTION_CNANNEL},M_DIALSTATUS)})' . PHP_EOL . "\t"
+            . 'same => n,ExecIf($[ "${M_DIALSTATUS}" == "ANSWER" ]?Hangup())' . PHP_EOL . "\t"
+            . 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . PHP_EOL . "\t"
+            . 'same => n,Set(FROM_CHAN=${INTECEPTION_CNANNEL})' . PHP_EOL . "\t"
+            . 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${INTECEPTION_CNANNEL})' . PHP_EOL . "\t"
+            . 'same => n,Gosub(set-answer-state,${EXTEN},1)' . PHP_EOL . "\t"
+            . 'same => n,Gosub(dial_interception,${EXTEN},1)' . PHP_EOL . "\t"
+            . 'same => n,Gosub(dial_answer,${EXTEN},1)' . PHP_EOL . "\t"
+            . 'same => n,Bridge(${INTECEPTION_CNANNEL},Tk)' . PHP_EOL . "\t"
+            . 'same => n,Hangup()' . PHP_EOL;
     }
 
     /**
@@ -67,31 +70,40 @@ class ExtensionsInterception extends AsteriskConfigClass
      * @param string $providerId The provider ID.
      * @param string $src The source number.
      * @param string $dest_number The destination number.
+     * @param string $origCidName The original caller's display name (CTI client passes it
+     *                            as origCidName; the CDR src_name of the interception leg
+     *                            is built from it).
      *
      * @return void
      * @throws \Exception
      */
-    public static function testOriginate(string $providerId = 'SIP-1611151795', string $src = '203', string $dest_number = '79257184233'):void{
+    public static function testOriginate(
+        string $providerId = 'SIP-1611151795',
+        string $src = '203',
+        string $dest_number = '79257184233',
+        string $origCidName = ''
+    ): void {
         $am = Util::getAstManager('off');
-        $channels=$am->GetChannels();
+        $channels = $am->GetChannels();
         $interceptionChannel = '';
         $interceptionLinkedId = '';
-        foreach ($channels as $linkedId => $linkedIdData){
-            foreach ($linkedIdData as $tmpChannel){
-                if(!str_contains($tmpChannel, 'PJSIP/' . $providerId)){
+        foreach ($channels as $linkedId => $linkedIdData) {
+            foreach ($linkedIdData as $tmpChannel) {
+                if (!str_contains($tmpChannel, 'PJSIP/' . $providerId)) {
                     continue;
                 }
-                $interceptionChannel  = $tmpChannel;
+                $interceptionChannel = $tmpChannel;
                 $interceptionLinkedId = $linkedId;
             }
         }
-        if(empty($interceptionChannel)){
+        if (empty($interceptionChannel)) {
             SystemMessages::sysLogMsg('Interception', "Chan for $providerId not found...");
             return;
         }
-        $variable    = "pt1c_cid=$dest_number,ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL=$interceptionChannel,_OLD_LINKEDID=$interceptionLinkedId";
-        $channel     = "Local/$src@internal-originate";
-        $context     = 'interception-bridge';
+        $variable = "pt1c_cid=$dest_number,origCidName=$origCidName,ALLOW_MULTY_ANSWER=1,"
+            . "_INTECEPTION_CNANNEL=$interceptionChannel,_OLD_LINKEDID=$interceptionLinkedId";
+        $channel = "Local/$src@internal-originate";
+        $context = 'interception-bridge';
         $am->Originate($channel, $dest_number, $context, '1', null, null, null, $src, $variable, null, false);
     }
 }

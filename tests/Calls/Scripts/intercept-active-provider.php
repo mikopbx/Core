@@ -21,15 +21,20 @@ Usage:
 Options:
   --channel=<channel>  Select a channel when the provider has several active calls
   --caller=<number>    Override CALLERID(num) read from the provider channel
+  --cid-name=<name>    origCidName: display name of the original caller, as the CTI client sends it
+  --caller-name=<name> Display name of the AMI CallerID (the operator who intercepts)
   --execute            Perform Originate (without it the script is a dry run)
 
 Example:
   php {$argv[0]} SIP-PROVIDER-AAA880B194BA809EA72C0FCC4D6363AB 206 --execute
+  php {$argv[0]} SIP-1611151795 242 --cid-name='КАРС ГРУПП' --caller-name='Оператор' --execute
 TEXT;
 
 $positionals = [];
 $requestedChannel = null;
 $callerOverride = null;
+$origCidName = '';
+$callerName = '';
 $execute = false;
 
 foreach (array_slice($argv, 1) as $argument) {
@@ -43,6 +48,14 @@ foreach (array_slice($argv, 1) as $argument) {
     }
     if (str_starts_with($argument, '--caller=')) {
         $callerOverride = substr($argument, strlen('--caller='));
+        continue;
+    }
+    if (str_starts_with($argument, '--cid-name=')) {
+        $origCidName = substr($argument, strlen('--cid-name='));
+        continue;
+    }
+    if (str_starts_with($argument, '--caller-name=')) {
+        $callerName = substr($argument, strlen('--caller-name='));
         continue;
     }
     if (str_starts_with($argument, '--')) {
@@ -75,12 +88,15 @@ try {
     $request = ActiveProviderInterception::buildOriginateRequest(
         $selectedChannel,
         $internalExtension,
-        $callerNumber
+        $callerNumber,
+        $origCidName,
+        $callerName
     );
 
     fwrite(STDOUT, "Provider channel: {$selectedChannel['channel']}\n");
     fwrite(STDOUT, "Linkedid:         {$selectedChannel['linkedid']}\n");
     fwrite(STDOUT, "Caller number:    {$request['exten']}\n");
+    fwrite(STDOUT, "CallerID:         {$request['callerId']}\n");
     fwrite(STDOUT, "Originate channel: {$request['channel']}\n");
     fwrite(STDOUT, "Variables:        {$request['variables']}\n");
 
