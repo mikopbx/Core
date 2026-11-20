@@ -13,6 +13,7 @@ Tests the /pbxcore/api/v3/ivr-menu endpoint for:
 """
 
 import pytest
+import requests
 from conftest import assert_api_success, assert_record_exists, assert_record_deleted
 
 
@@ -360,13 +361,17 @@ class TestIvrMenuCRUD:
             'timeout': 9999  # Too large
         }
 
-        response = api_client.patch(f'ivr-menu/{ivr_id}', patch_data)
+        # PATCH goes through the same schema validation as create/update (timeout: 1..60),
+        # so an out-of-range value must be rejected with 422, not silently stored.
+        try:
+            response = api_client.patch(f'ivr-menu/{ivr_id}', patch_data)
+        except requests.exceptions.HTTPError as e:
+            assert e.response is not None and e.response.status_code == 422, \
+                f"Expected 422 for out-of-range timeout, got: {e}"
+            print(f"✓ Timeout range validation enforced: {e.response.status_code}")
+            return
 
-        # Should fail validation (but might be allowed in some implementations)
-        if response['result'] is False:
-            print(f"✓ Timeout range validation enforced")
-        else:
-            print(f"⚠ Timeout range validation not enforced (implementation-specific)")
+        pytest.fail(f"Out-of-range timeout 9999 was accepted: {response}")
 
     def test_13_verify_cleanup(self, api_client):
         """Perform cleanup and verify all test IVR menus are removed"""

@@ -12,6 +12,8 @@ Call Queues are the most complex resource with:
 - Comprehensive validation
 """
 
+import secrets
+
 import pytest
 from conftest import (
     assert_api_success,
@@ -656,8 +658,10 @@ def test_update_nonexistent_call_queue_returns_404(api_client):
     print(f"Test: Update Non-Existent Call Queue Returns 404")
     print(f"{'='*70}")
 
-    # Use impossible ID that won't exist
-    nonexistent_id = "CALL-QUEUE-NONEXISTENT-404-TEST"
+    # A well-formed ID that does not exist yet. Queue IDs must match ^QUEUE-[A-Fa-f0-9]{4,64}$
+    # (validated on create since the GHSA-rgv3 fix): the REST routes only reach that shape, and the
+    # ID is written into queues.conf. Random hex keeps it unique across runs.
+    nonexistent_id = f"QUEUE-{secrets.token_hex(8).upper()}"
 
     try:
         # ====================================================================
