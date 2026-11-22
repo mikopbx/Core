@@ -260,7 +260,7 @@ class PbxExtensionState extends Injectable
             return true;
         }
 
-        $this->db->begin(true);
+        $this->beginWithWriteLock();
         try {
             $defaultRules         = call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]);
 
@@ -575,7 +575,7 @@ class PbxExtensionState extends Injectable
         foreach ($currentRules as $detailRule) {
             $savedState[$detailRule->networkfilterid] = $detailRule->action;
         }
-        $this->db->begin(true);
+        $this->beginWithWriteLock();
         try {
             // Delete the current firewall rules
             if ( ! $currentRules->delete()) {
@@ -753,6 +753,35 @@ class PbxExtensionState extends Injectable
     }
 
     /**
+     * Opens a transaction on the main database and takes the SQLite write lock
+     * before the first read.
+     *
+     * Phalcon begin() issues a deferred BEGIN: the first SELECT pins a WAL read
+     * snapshot, and the first write after any concurrent commit fails at once
+     * with "database is locked" — busy_timeout does not apply to a stale
+     * snapshot. While a module operation runs, its orchestrator heartbeats the
+     * journal row in this database every second, so a read-then-write
+     * transaction here loses that race at random. A no-op write as the first
+     * statement takes the write lock up front: concurrent writers wait through
+     * busy_timeout instead, and the transaction stays a Phalcon transaction
+     * (isUnderTransaction() stays true for module hooks).
+     *
+     * Used only where the transaction writes right after its first read; the
+     * disable probe keeps a deferred BEGIN because Core itself does not write
+     * there and module hooks may run for many seconds.
+     */
+    private function beginWithWriteLock(): void
+    {
+        $this->db->begin(true);
+        try {
+            $this->db->execute('UPDATE m_PbxExtensionModules SET disabled = disabled WHERE 0');
+        } catch (Throwable $e) {
+            $this->db->rollback(true);
+            throw $e;
+        }
+    }
+
+    /**
      * Performs the necessary checks before enabling the module.
      *
      * @return bool True if the checks passed successfully, false otherwise.
@@ -761,8 +790,9 @@ class PbxExtensionState extends Injectable
     {
         $success = true;
 
-        // Start a temporary transaction for the checks
-        $this->db->begin(true);
+        // Start a temporary transaction for the checks. The write lock is taken
+        // up front: the probe reads the module row and writes it right after.
+        $this->beginWithWriteLock();
 
         // The body invokes third-party hooks (onBeforeModuleEnable) and reflection
         // over arbitrary module models which may throw. Guard with try/finally so the
