@@ -364,6 +364,55 @@ class CallerIdDidProcessorRegexTest extends TestCase
     }
 
     /**
+     * Standard header sources must hand the subroutine the variable name, not the value:
+     * a substituted display name with a comma would be split into several Gosub ARGs.
+     */
+    public function testStandardCallerIdSourcePassesHeaderVariableName(): void
+    {
+        foreach ([Sip::CALLERID_SOURCE_FROM, Sip::CALLERID_SOURCE_RPID, Sip::CALLERID_SOURCE_PAI] as $source) {
+            $processor = new CallerIdDidProcessor('SIP-TRUNK-TEST', ['cid_source' => $source]);
+            $dialplan = $processor->generateIncomingProcessingContext();
+
+            $this->assertStringContainsString('Gosub(sub-extract-callerid,s,1(tmpCidHeader))', $dialplan, $source);
+            $this->assertStringNotContainsString('1(${tmpCidHeader})', $dialplan, $source);
+            $this->assertStringNotContainsString('"x${tmpCidHeader}"', $dialplan, $source);
+        }
+    }
+
+    /**
+     * Regression for #1424: PJSIP_PARSE_URI fails ("Failed to parse URI") on a header
+     * value with parameters such as ";tag=" or ";party=calling", so it must only receive
+     * the isolated URI, and raw header data must never enter a $[...] expression.
+     */
+    public function testCallerIdSubroutineParsesIsolatedUriOnly(): void
+    {
+        $dialplan = CallerIdDidProcessor::generateCallerIdExtractionSubroutine();
+
+        $this->assertStringContainsString('Set(LOCAL(cidVar)=${FILTER(A-Za-z0-9_,${ARG1})})', $dialplan);
+        $this->assertStringContainsString('Set(LOCAL(cidHdr)=${${cidVar}})', $dialplan);
+        // The URI follows the LAST '<': a quoted display name may contain '<' itself
+        $this->assertStringContainsString('Set(LOCAL(cidLtQty)=${FIELDQTY(cidHdr,<)})', $dialplan);
+        $this->assertStringContainsString('Set(cidUri=${CUT(CUT(cidHdr,<,${cidLtQty}),>,1)})', $dialplan);
+        $this->assertStringContainsString('Set(LOCAL(cidUri)=${CUT(cidHdr,\;,1)})', $dialplan);
+        $this->assertStringContainsString('PJSIP_PARSE_URI(${cidUri},user)', $dialplan);
+        $this->assertStringNotContainsString('PJSIP_PARSE_URI(${ARG1}', $dialplan);
+        $this->assertStringNotContainsString('PJSIP_PARSE_URI(${cidHdr}', $dialplan);
+
+        // Header-derived values may enter an expression only through LEN(); fromCid is
+        // safe only after FILTER, in the final ExecIf.
+        preg_match_all('/\$\[[^\]]*\]/', $dialplan, $expressions);
+        foreach ($expressions[0] as $expression) {
+            $bare = preg_replace('/\$\{LEN\(\$\{\w+\}\)\}/', '', $expression);
+            foreach (['ARG1', 'cidHdr', 'cidUri', 'cidUser'] as $var) {
+                $this->assertStringNotContainsString($var, $bare, $expression);
+            }
+        }
+        $this->assertStringContainsString('Set(LOCAL(cidScheme)=${FILTER(a-z,', $dialplan);
+        $this->assertStringContainsString('GotoIf($[${LEN(${fromCid})} > 0]?clean)', $dialplan);
+        $this->assertStringContainsString('GotoIf($[${LEN(${cidUser})} == ${LEN(${cidUri})}]?clean)', $dialplan);
+    }
+
+    /**
      * Sanity check that the PCRE pattern the AGI builds extracts the expected DID from a
      * realistic X-ES-R header value, and that an optional non-participating capture group
      * falls back to the whole match rather than yielding an empty string. Mirrors the

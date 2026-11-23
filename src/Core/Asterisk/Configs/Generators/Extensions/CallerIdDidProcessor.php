@@ -156,8 +156,10 @@ class CallerIdDidProcessor
             $dialplan .= "\tsame => n,NoOp(Raw header value: \${tmpCidHeader})\n";
         }
 
-        // Check if header exists
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?Gosub(sub-extract-callerid,s,1(\${tmpCidHeader})))\n";
+        // Pass the variable NAME: the value may contain commas, quotes and parentheses that
+        // would break Gosub argument parsing or a $[...] guard. A missing header leaves
+        // CALLERID(num) untouched inside the subroutine, so no guard is needed here.
+        $dialplan .= "\tsame => n,Gosub(sub-extract-callerid,s,1(tmpCidHeader))\n";
 
         return $dialplan;
     }
@@ -209,23 +211,28 @@ class CallerIdDidProcessor
             // which applies PCRE and writes the result into fromCid. The pattern is
             // base64-encoded so dialplan-special characters in it survive the parser.
             $encodedRegex = base64_encode($this->providerSettings['cid_parser_regex']);
-            $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?AGI(extract_did_cid.php,{$encodedRegex},tmpCidHeader,fromCid))\n";
+            $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpCidHeader})} > 0]?"
+                . "AGI(extract_did_cid.php,{$encodedRegex},tmpCidHeader,fromCid))\n";
         } elseif (!empty($this->providerSettings['cid_parser_start']) || !empty($this->providerSettings['cid_parser_end'])) {
             // Use delimiter parser
             if (!empty($start) && !empty($end)) {
-                $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?Set(fromCid=\${CUT(CUT(tmpCidHeader,{$start},2),{$end},1)}))\n";
+                $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpCidHeader})} > 0]?"
+                    . "Set(fromCid=\${CUT(CUT(tmpCidHeader,{$start},2),{$end},1)}))\n";
             } elseif (!empty($start)) {
-                $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?Set(fromCid=\${CUT(tmpCidHeader,{$start},2)}))\n";
+                $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpCidHeader})} > 0]?"
+                    . "Set(fromCid=\${CUT(tmpCidHeader,{$start},2)}))\n";
             } elseif (!empty($end)) {
-                $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?Set(fromCid=\${CUT(tmpCidHeader,{$end},1)}))\n";
+                $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpCidHeader})} > 0]?"
+                    . "Set(fromCid=\${CUT(tmpCidHeader,{$end},1)}))\n";
             }
         } else {
             // Use raw value
-            $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?Set(fromCid=\${tmpCidHeader}))\n";
+            $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpCidHeader})} > 0]?"
+                . "Set(fromCid=\${tmpCidHeader}))\n";
         }
 
         // Set numeric CallerID if extracted, preserving the display name from the provider
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" != \"x\"]?Set(CALLERID(num)=\${fromCid}))\n";
+        $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${fromCid})} > 0]?Set(CALLERID(num)=\${fromCid}))\n";
 
         return $dialplan;
     }
@@ -316,10 +323,12 @@ class CallerIdDidProcessor
 
         // Extract DID from Diversion header
         // First try PJSIP_PARSE_URI, then fallback to CUT method
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDiversion}\" != \"x\"]?Set(divNum=\${PJSIP_PARSE_URI(\${tmpDiversion},user)}))\n";
+        $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpDiversion})} > 0]?"
+            . "Set(divNum=\${PJSIP_PARSE_URI(\${tmpDiversion},user)}))\n";
 
         // Fallback: extract using CUT if PJSIP_PARSE_URI didn't work
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${divNum}\" == \"x\" && \"x\${tmpDiversion}\" != \"x\"]?Set(divNum=\${CUT(CUT(tmpDiversion,@,1),:,2)}))\n";
+        $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${divNum})} == 0 && \${LEN(\${tmpDiversion})} > 0]?"
+            . "Set(divNum=\${CUT(CUT(tmpDiversion,@,1),:,2)}))\n";
 
         if ($this->debugMode) {
             $dialplan .= "\tsame => n,NoOp(Extracted DID from Diversion: \${divNum})\n";
@@ -382,19 +391,24 @@ class CallerIdDidProcessor
             // base64-encoded so dialplan-special characters in it (comma in {10,11}, ';',
             // quotes) survive the extensions.conf parser.
             $encodedRegex = base64_encode($this->providerSettings['did_parser_regex']);
-            $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDidHeader}\" != \"x\"]?AGI(extract_did_cid.php,{$encodedRegex},tmpDidHeader,didNum))\n";
+            $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpDidHeader})} > 0]?"
+                . "AGI(extract_did_cid.php,{$encodedRegex},tmpDidHeader,didNum))\n";
         } elseif (!empty($this->providerSettings['did_parser_start']) || !empty($this->providerSettings['did_parser_end'])) {
             // Use delimiter parser
             if (!empty($start) && !empty($end)) {
-                $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDidHeader}\" != \"x\"]?Set(didNum=\${CUT(CUT(tmpDidHeader,{$start},2),{$end},1)}))\n";
+                $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpDidHeader})} > 0]?"
+                    . "Set(didNum=\${CUT(CUT(tmpDidHeader,{$start},2),{$end},1)}))\n";
             } elseif (!empty($start)) {
-                $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDidHeader}\" != \"x\"]?Set(didNum=\${CUT(tmpDidHeader,{$start},2)}))\n";
+                $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpDidHeader})} > 0]?"
+                    . "Set(didNum=\${CUT(tmpDidHeader,{$start},2)}))\n";
             } elseif (!empty($end)) {
-                $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDidHeader}\" != \"x\"]?Set(didNum=\${CUT(tmpDidHeader,{$end},1)}))\n";
+                $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpDidHeader})} > 0]?"
+                    . "Set(didNum=\${CUT(tmpDidHeader,{$end},1)}))\n";
             }
         } else {
             // Use raw value
-            $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDidHeader}\" != \"x\"]?Set(didNum=\${tmpDidHeader}))\n";
+            $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${tmpDidHeader})} > 0]?"
+                . "Set(didNum=\${tmpDidHeader}))\n";
         }
 
         if ($this->debugMode) {
@@ -425,30 +439,58 @@ class CallerIdDidProcessor
     }
 
     /**
-     * Generate subroutine for extracting CallerID from SIP URI
-     * This is a shared subroutine used by multiple CallerID extraction methods
+     * Generate subroutine for extracting CallerID from a From / Remote-Party-ID /
+     * P-Asserted-Identity header value.
+     *
+     * ARG1 is the NAME of the channel variable holding the raw header, not its value:
+     * the value is substituted before Gosub splits its arguments, so a display name
+     * with a comma would otherwise be cut into several ARGs.
+     *
+     * The header value is a name-addr (`"Name" <sip:user@host>;tag=x`) or an addr-spec
+     * (`sip:user@host;tag=x`). PJSIP_PARSE_URI accepts only the bare URI and logs
+     * "Failed to parse URI" on header parameters, so the URI is isolated first. Raw
+     * header data never enters a $[...] expression or an ExecIf branch, where quotes,
+     * colons or parentheses from the display name would corrupt the parsing: emptiness
+     * is tested with LEN() and the scheme is reduced to letters before comparison.
      *
      * @return string Dialplan subroutine
      */
     public static function generateCallerIdExtractionSubroutine(): string
     {
         $dialplan = "[sub-extract-callerid]\n";
-        $dialplan .= "exten => s,1,NoOp(Extracting CallerID from: \${ARG1})\n";
+        $dialplan .= "exten => s,1,Set(LOCAL(cidVar)=\${FILTER(A-Za-z0-9_,\${ARG1})})\n";
+        $dialplan .= "\tsame => n,Set(LOCAL(cidHdr)=\${\${cidVar}})\n";
+        $dialplan .= "\tsame => n,NoOp(Extracting CallerID from: \${cidHdr})\n";
+        $dialplan .= "\tsame => n,Set(LOCAL(fromCid)=)\n";
+        $dialplan .= "\tsame => n,Set(LOCAL(cidUser)=)\n";
 
-        // Try to extract using PJSIP_PARSE_URI first
-        $dialplan .= "\tsame => n,Set(fromCid=\${PJSIP_PARSE_URI(\${ARG1},user)})\n";
+        // name-addr: the URI between the LAST < and the following > (a quoted display name
+        // may itself contain < or >); addr-spec: everything before header parameters.
+        $dialplan .= "\tsame => n,Set(LOCAL(cidLtQty)=\${FIELDQTY(cidHdr,<)})\n";
+        $dialplan .= "\tsame => n,Set(LOCAL(cidUri)=\${CUT(cidHdr,\;,1)})\n";
+        $dialplan .= "\tsame => n,GotoIf(\$[\${cidLtQty} < 2]?scheme)\n";
+        $dialplan .= "\tsame => n,Set(cidUri=\${CUT(CUT(cidHdr,<,\${cidLtQty}),>,1)})\n";
+        $dialplan .= "\tsame => n(scheme),Set(LOCAL(cidScheme)=\${FILTER(a-z,\${TOLOWER(\${CUT(cidUri,:,1)})})})\n";
 
-        // If PJSIP_PARSE_URI didn't work, try CUT method for sip: URIs
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" == \"x\" && \"\${ARG1}\" : \"sip:\"]?Set(fromCid=\${CUT(CUT(ARG1,@,1),:,2)}))\n";
+        // tel: URIs carry the number directly; PJSIP_PARSE_URI is meant for SIP URIs
+        $dialplan .= "\tsame => n,GotoIf(\$[\"\${cidScheme}\" == \"tel\"]?tel)\n";
+        $dialplan .= "\tsame => n,GotoIf(\$[\"\${cidScheme}\" != \"sip\" & \"\${cidScheme}\" != \"sips\"]?fallback)\n";
+        $dialplan .= "\tsame => n,Set(fromCid=\${PJSIP_PARSE_URI(\${cidUri},user)})\n";
+        $dialplan .= "\tsame => n,Goto(fallback)\n";
+        $dialplan .= "\tsame => n(tel),Set(fromCid=\${CUT(CUT(cidUri,:,2),\;,1)})\n";
 
-        // For tel: URIs, extract number after tel:
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" == \"x\" && \"\${ARG1}\" : \"tel:\"]?Set(fromCid=\${CUT(CUT(ARG1,>,1),:,2)}))\n";
+        // Last resort for URIs PJSIP could not parse: user part between scheme and @.
+        // A URI without @ has no user part; its host must not become the CallerID.
+        $dialplan .= "\tsame => n(fallback),GotoIf(\$[\${LEN(\${fromCid})} > 0]?clean)\n";
+        $dialplan .= "\tsame => n,Set(cidUser=\${CUT(cidUri,@,1)})\n";
+        $dialplan .= "\tsame => n,GotoIf(\$[\${LEN(\${cidUser})} == \${LEN(\${cidUri})}]?clean)\n";
+        $dialplan .= "\tsame => n,Set(fromCid=\${CUT(cidUser,:,2)})\n";
 
-        // Clean up extracted number (remove < > characters if present)
-        $dialplan .= "\tsame => n,Set(fromCid=\${FILTER(+0123456789,\${fromCid})})\n";
+        // Keep only CallerID characters before the value reaches CALLERID(num)
+        $dialplan .= "\tsame => n(clean),Set(fromCid=\${FILTER(+0123456789,\${fromCid})})\n";
 
         // Set numeric CallerID if extracted, preserving the display name from the provider
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" != \"x\"]?Set(CALLERID(num)=\${fromCid}))\n";
+        $dialplan .= "\tsame => n,ExecIf(\$[\${LEN(\${fromCid})} > 0]?Set(CALLERID(num)=\${fromCid}))\n";
         $dialplan .= "\tsame => n,Return()\n\n";
 
         return $dialplan;
