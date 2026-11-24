@@ -204,31 +204,32 @@ rm -rf /tmp/freeoffload
 echo_info "Waiting for device ready..."
 busybox sleep 4
 
-# Attempt to identify CD-ROM drives
-cddev=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "rom$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
-length=0
+# Collect every CD-ROM drive that holds a readable filesystem. A VM may expose
+# several drives at once (empty tray, VMware Tools or cloud-init CIDATA next to
+# the boot ISO), so each of them has to be probed on its own: probing them as a
+# single multi-line name made blkid fail and skipped the CD branch entirely.
+cddev=""
+for rom in $(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "rom$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u); do
+  if /sbin/blkid "/dev/${rom}" >/dev/null 2>&1; then
+    cddev="${cddev} ${rom}"
+  fi
+done
 
-# Attempt to identify device by UUID
-/sbin/blkid "/dev/${cddev}" >/dev/null 2>&1
-blkResult="$?"
-
-# If a CD-ROM drive is found, update length with its identifier length
-if [ "$blkResult" -eq 0 ]; then
-  length=${#cddev}
-fi
 echo_info "Searching for RootFS on LiveCD..."
 
-# If the length of the identifier is more than 2, it means we have identified a CD-ROM drive,
-# and we should use this for subsequent operations. Otherwise, try to identify regular disks.
-if [ "$length" -gt 2 ]; then
+# With a readable CD-ROM present the whole device is used, otherwise fall back
+# to the first partition of every hard disk.
+isLiveCD=0
+if [ -n "$cddev" ]; then
   disks=${cddev}
+  isLiveCD=1
 else
   disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
 fi
 
 # For each identified disk (or the CD-ROM drive), attempt to mount it as an offload disk.
 for disk in $disks; do
-  if [ "$length" -gt 2 ]; then
+  if [ "$isLiveCD" = "1" ]; then
     diskPath="/dev/${disk}"
   else
     partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$")
@@ -433,9 +434,8 @@ fi
 # Log message indicating failure to find the /offload partition
 echo_error "The system was unable to find the /offload partition!"
 echo
-echo_info "Please send the output of 'ls /dev' and 'fdisk -l' to the"
+echo_info "Boot diagnostics are printed below. Please send them to the"
 echo_info "development team for assistance."
-echo_info "Apologies for the inconvenience, and thank you for your patience as we resolve this issue."
 echo
 
 exit 1

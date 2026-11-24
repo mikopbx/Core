@@ -44,7 +44,11 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
 	mv /mnt/etc/inittab_base "$resFileInitTab";
 
    # Scan for serial devices and configure them in inittab for automatic respawning of getty processes.
-  # Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
+  # Scan both x86 (ttyS) and ARM (ttyAMA) serial ports.
+  # agetty runs with -L (force CLOCAL) and without -h: a hypervisor serial port
+  # (VMware, cloud consoles) may never assert DCD/CTS, and without CLOCAL the
+  # line looks permanently hung up, so getty exits and respawns silently while
+  # kernel and pbx-message output still reaches the port.
   devises="$(/bin/ls /dev/ttyS* /dev/ttyAMA* 2> /dev/null)";
   for dev in $devises; do
     # For ttyAMA (ARM) devices, setserial is not applicable — use character device check
@@ -54,7 +58,7 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
           devName="$(/bin/busybox basename "$dev")";
           echo " - Configuring $devName for conditional autologin.";
           echo >> "$resFileInitTab";
-          echo "::respawn:/bin/sh -c 'i=1; while [ \$i -le 20 ]; do if [ -f /etc/ssh-tty-autologin ]; then break; fi; sleep 1; i=\$((i+1)); done; exec /sbin/agetty -a root -h -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
+          echo "::respawn:/bin/sh -c 'i=1; while [ \$i -le 20 ]; do if [ -f /etc/ssh-tty-autologin ]; then break; fi; sleep 1; i=\$((i+1)); done; exec /sbin/agetty -L -a root -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
         fi
         continue
         ;;
@@ -76,7 +80,7 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
        # Adding an entry to inittab that loops and checks for /etc/ssh-autologin at intervals.
        # This allows breaking the loop and starting the agetty process as soon as the file is created.
        echo >> "$resFileInitTab";
-       echo "::respawn:/bin/sh -c 'i=1; while [ \$i -le 20 ]; do if [ -f /etc/ssh-tty-autologin ]; then break; fi; sleep 1; i=\$((i+1)); done; exec /sbin/agetty -a root -h -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
+       echo "::respawn:/bin/sh -c 'i=1; while [ \$i -le 20 ]; do if [ -f /etc/ssh-tty-autologin ]; then break; fi; sleep 1; i=\$((i+1)); done; exec /sbin/agetty -L -a root -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
     fi;
   done
 

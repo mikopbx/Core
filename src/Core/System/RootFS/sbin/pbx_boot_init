@@ -143,6 +143,36 @@ if [ -f /tmp/rebooting ]; then
   exit 0
 fi
 
+# Print one diagnostic block through pbx-message so it reaches both the VGA
+# console and every serial port. Only binaries shipped in the initramfs may be
+# used here: /usr is a symlink into the missing /offload at this point.
+bootFailureDump() {
+  # The title must not start with '-': pbx-message parses leading dashes as options.
+  echo_info "=== $1 ==="
+  /bin/sh -c "$2" 2>/dev/null | while IFS= read -r line; do
+    # Leading space keeps pbx-message from reading a line like "-sda1" as an option.
+    echo_info " ${line}"
+  done
+}
+
+# Boot stopped before /offload became available. The PHP console menu cannot
+# run, so dump the facts needed to diagnose the storage layout right away and
+# release the serial getty immediately: it otherwise waits up to 20 s for the
+# autologin flag that only a successful boot creates.
+bootFailure() {
+  echo_error "$1"
+  touch /tmp/boot_failed
+  touch /etc/ssh-tty-autologin
+  echo_info "Boot diagnostics, please send this output to the development team:"
+  bootFailureDump "kernel cmdline" "cat /proc/cmdline"
+  bootFailureDump "block devices" "/bin/lsblk -o NAME,TYPE,SIZE,FSTYPE,LABEL,UUID"
+  bootFailureDump "blkid" "/sbin/blkid"
+  bootFailureDump "partitions" "cat /proc/partitions"
+  bootFailureDump "/dev" "ls /dev"
+  bootFailureDump "dmesg, last 30 lines" "/bin/dmesg | /bin/busybox tail -n 30"
+  exit 1
+}
+
 # Mounting offload and configuration directories
 echo
 echo_info "Start /sbin/mountoffload script..."
@@ -154,12 +184,8 @@ if /sbin/mountoffload; then
       # Booting up the system
       /etc/rc/bootup 2>/dev/null
     else
-      echo_error "Failed to mount conf, halting boot process."
-      sleep 15;
-      exit 1
+      bootFailure "Failed to mount conf, halting boot process."
     fi
 else
-    echo_error "Failed to mount offload, halting boot process."
-    sleep 15;
-    exit 1
+    bootFailure "Failed to mount offload, halting boot process."
 fi

@@ -40,11 +40,13 @@ MESSAGE=""
 SERIAL_CACHE="/etc/.pbx_serial_ports"
 SERIAL_CHECK_AGE=300  # Re-check every 5 minutes
 
-# ANSI color codes
-COLOR_GREEN="\033[32;1m"
-COLOR_RED="\033[31;1m"
-COLOR_YELLOW="\033[33;1m"
-COLOR_RESET="\033[0m"
+# ANSI color codes. They must hold a real ESC byte: busybox echo does not
+# interpret "\033", so the literal text used to reach the serial port and the
+# syslog untouched (the strip filter below matches the ESC byte, not "\033").
+COLOR_GREEN="$(/bin/busybox printf '\033[32;1m')"
+COLOR_RED="$(/bin/busybox printf '\033[31;1m')"
+COLOR_YELLOW="$(/bin/busybox printf '\033[33;1m')"
+COLOR_RESET="$(/bin/busybox printf '\033[0m')"
 
 # Parse command line options
 while [ $# -gt 0 ]; do
@@ -187,7 +189,10 @@ output_serial() {
 
     # Detect if stdout is directly connected to a serial port (prevents duplicate output)
     local skip_port=""
-    local stdout_target=$(/bin/busybox readlink /proc/self/fd/1 2>/dev/null)
+    # /proc/$$, not /proc/self: inside the command substitution below "self" is
+    # the subshell whose fd 1 is a pipe, so the serial port was never skipped
+    # and every message reached a serial console twice.
+    local stdout_target=$(/bin/busybox readlink "/proc/$$/fd/1" 2>/dev/null)
     case "$stdout_target" in
         /dev/ttyS*|/dev/ttyAMA*)
             skip_port="$stdout_target"

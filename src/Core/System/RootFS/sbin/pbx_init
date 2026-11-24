@@ -107,7 +107,11 @@ while : ; do
         fi
     fi
     # Ensure that the /offload partition is mounted.
-    if [ ! -f "$freeOffloadFile" ]; then
+    if [ -f /tmp/boot_failed ]; then
+        # Boot failed before /usr became available: the PHP banner and console
+        # menu cannot run, so give this console a shell straight away.
+        /bin/sh;
+    elif [ ! -f "$freeOffloadFile" ]; then
         # Show welcome banner, then console menu
         /etc/rc/welcome_banner 2>/dev/null;
         /etc/rc/console_menu 2>/dev/null;
