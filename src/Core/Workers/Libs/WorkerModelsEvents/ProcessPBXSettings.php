@@ -85,6 +85,7 @@ class ProcessPBXSettings extends Injectable
                 PbxSettings::PBX_CALL_PARKING_EXT,
                 PbxSettings::PBX_CALL_PARKING_START_SLOT,
                 PbxSettings::PBX_CALL_PARKING_END_SLOT,
+                PbxSettings::PBX_CALL_PARKING_DURATION,
             ],
             'actions' => [
                 ReloadFeaturesAction::class, // ??? parkcall in features.conf ???

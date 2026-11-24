@@ -115,7 +115,11 @@ class ResParkingConf extends AsteriskConfigClass
             "findslot => next" . PHP_EOL .
             "comebacktoorigin=no" . PHP_EOL .
             "comebackcontext = parked-calls-timeout" . PHP_EOL .
-            "parkpos => $this->ParkingStartSlot-$this->ParkingEndSlot" . PHP_EOL . PHP_EOL;
+            "parkpos => $this->ParkingStartSlot-$this->ParkingEndSlot" . PHP_EOL .
+            // parkingtime must stay in sync with the PARKING_DURATION dialplan global below:
+            // extensions.lua computes the CDR start of a timed-out parked call as now - PARKING_DURATION,
+            // while Asterisk holds the call for parkingtime (#1400).
+            "parkingtime => $this->ParkingDuration" . PHP_EOL . PHP_EOL;
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);
@@ -164,7 +168,7 @@ class ResParkingConf extends AsteriskConfigClass
     {
         $this->ParkingExt       = PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_EXT);
         $this->ParkingFeature   = PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_FEATURE);
-        $this->ParkingDuration  = PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_DURATION);
+        $this->ParkingDuration  = (int)PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_DURATION);
         $this->ParkingStartSlot = (int)PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_START_SLOT);
         $this->ParkingEndSlot   = (int)PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_END_SLOT);
     }
