@@ -1,0 +1,118 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Tears down an SSH console session after its terminal hangs up (#792).
+#
+# Usage (from /etc/rc/hello): pbx-session-watchdog <leader-pid> 3>&1 </dev/null >/dev/null 2>&1 &
+# File descriptor 3 must be the session terminal; 0-2 must not be.
+#
+# When the SSH connection drops, the kernel sends SIGHUP only to the session
+# leader, and dropbear (started by monit) hands its sessions SIGHUP already
+# ignored, which a shell cannot trap. The rest of the session (pbx_init,
+# console_menu, sngrep, mc, an interactive shell and its jobs) never learns
+# about the hangup and keeps reading the dead pty, burning a core per process.
+#
+# The watchdog polls the terminal; once it is hung up it terminates every
+# process of its session that still has stdin/stdout/stderr on that terminal.
+# Processes detached from the terminal (nohup, mwExecBg workers, screen/tmux
+# sessions) are left alone.
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH
+
+leaderPid="$1"
+pollInterval=2
+termGrace=5
+
+[ -n "$leaderPid" ] && [ -t 3 ] || exit 0
+
+# The leader stops the watchdog with USR1 on a normal logout. TERM/HUP/INT are
+# ignored so the teardown is not interrupted by the signals it sends itself.
+trap 'exit 0' USR1
+trap '' TERM HUP INT
+
+ttyPath=$(readlink "/proc/$$/fd/3")
+# Fields after "pid (comm) ": state ppid pgrp session ...
+set -- $(sed 's/.*) //' "/proc/$$/stat")
+sessionId="$4"
+[ -n "$ttyPath" ] && [ -n "$sessionId" ] || exit 0
+
+while [ -t 3 ]; do
+    [ -d "/proc/$leaderPid" ] || exit 0
+    sleep "$pollInterval"
+done
+
+# Terminal is gone: from here on a normal-logout USR1 must not abort the cleanup.
+trap '' USR1
+
+# Prints PIDs of this session whose fd 0, 1 or 2 points to the hung-up terminal.
+listTerminalProcesses()
+{
+    for procDir in /proc/[0-9]*; do
+        pid="${procDir#/proc/}"
+        [ "$pid" = "$$" ] && continue
+        stat=$(cat "$procDir/stat" 2>/dev/null) || continue
+        set -- ${stat##*) }
+        [ "$4" = "$sessionId" ] || continue
+        for fd in 0 1 2; do
+            link=$(readlink "$procDir/fd/$fd" 2>/dev/null) || continue
+            case "$link" in
+                "$ttyPath" | "$ttyPath (deleted)")
+                    echo "$pid"
+                    break
+                    ;;
+            esac
+        done
+    done
+}
+
+# Shell wrappers of the menu (this leader and pbx_init) run 'kill 0' from
+# their TERM traps, which would also hit nohup'ed children of the session.
+# Let the applications exit gracefully first and kill the wrappers last.
+isMenuWrapper()
+{
+    [ "$1" = "$leaderPid" ] && return 0
+    case "$(tr '\0' ' ' < "/proc/$1/cmdline" 2>/dev/null)" in
+        *"/sbin/pbx_init"*) return 0 ;;
+    esac
+    return 1
+}
+
+targets=$(listTerminalProcesses)
+[ -n "$targets" ] || exit 0
+logger -t pbx-session-watchdog "terminal $ttyPath of session $sessionId hung up, terminating:" $targets
+
+for pid in $targets; do
+    isMenuWrapper "$pid" || kill -TERM "$pid" 2>/dev/null
+done
+
+waited=0
+while [ "$waited" -lt "$termGrace" ]; do
+    sleep 1
+    waited=$((waited + 1))
+    survivors=""
+    for pid in $(listTerminalProcesses); do
+        isMenuWrapper "$pid" || survivors="$survivors $pid"
+    done
+    [ -z "$survivors" ] && break
+done
+
+targets=$(listTerminalProcesses)
+[ -n "$targets" ] && kill -KILL $targets 2>/dev/null
+exit 0

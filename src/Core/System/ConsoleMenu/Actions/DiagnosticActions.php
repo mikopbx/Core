@@ -136,8 +136,8 @@ class DiagnosticActions
     /**
      * Run ncurses application via wrapper script
      *
-     * Creates a temporary shell script that properly initializes terminal
-     * before running the application. This is necessary because PHP passthru()
+     * Runs the application through a wrapper shell that properly initializes the
+     * terminal before starting it. This is necessary because PHP passthru()
      * doesn't properly pass terminal control for commands like 'reset'.
      *
      * @param string $command Command to run
@@ -146,22 +146,20 @@ class DiagnosticActions
     {
         $term = $this->getOptimalTerm();
         $tty = exec('tty 2>/dev/null') ?: '/dev/console';
-        $wrapper = "/tmp/ncurses_" . getmypid() . ".sh";
 
-        // Create wrapper script that explicitly reopens the terminal
-        // This ensures proper terminal control after CliMenu closes
-        $script = "#!/bin/sh\n";
-        $script .= "exec <$tty >$tty 2>&1\n";
-        $script .= "export TERM=$term\n";
-        $script .= "reset\n";
-        $script .= "exec $command\n";
+        // The wrapper shell explicitly reopens the terminal, which ensures proper
+        // terminal control after CliMenu closes. It gets the tty, TERM and the
+        // command as arguments, so no temporary script is left behind when the
+        // session is torn down while the application runs.
+        $script = 'exec <"$1" >"$1" 2>&1; export TERM="$2"; reset; eval "exec $3"';
+        passthru(
+            '/bin/sh -c ' . escapeshellarg($script) . ' sh '
+            . escapeshellarg($tty) . ' '
+            . escapeshellarg($term) . ' '
+            . escapeshellarg($command)
+        );
 
-        file_put_contents($wrapper, $script);
-        chmod($wrapper, 0755);
-        passthru($wrapper);
-
-        // Cleanup and clear screen
-        @unlink($wrapper);
+        // Clear screen
         echo "\033[2J\033[H";
     }
 

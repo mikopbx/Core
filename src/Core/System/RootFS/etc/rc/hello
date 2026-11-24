@@ -20,11 +20,27 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin;
 export PATH;
 
-# Defence in depth: when dropbear/sshd closes the slave pty after a sudden
-# disconnect, the kernel sends SIGHUP only to the session leader (this script).
-# By default sh inherits SIG_IGN for SIGHUP from its parent, leaving the whole
-# child chain (pbx_init → console_menu) orphaned. Explicitly trap and kill the
-# entire process group so PHP children terminate too.
+# On an SSH disconnect the kernel sends SIGHUP only to this script (the session
+# leader), and dropbear started by monit hands it SIGHUP already ignored, which
+# cannot be trapped. The HUP trap below therefore only works when SIGHUP is not
+# ignored on entry; the TERM trap tears the process group down when this script
+# is terminated explicitly.
 trap 'trap - HUP TERM; kill 0 2>/dev/null; exit 0' HUP TERM
 
+# The watchdog notices the terminal hangup itself and terminates the processes
+# still bound to it (pbx_init, console_menu, sngrep, a console shell). #792
+watchdogPid=''
+if [ -t 1 ]; then
+    /sbin/pbx-session-watchdog "$$" 3>&1 </dev/null >/dev/null 2>&1 &
+    watchdogPid=$!
+fi
+
 /sbin/pbx_init;
+initResult=$?
+
+# Stop the watchdog only on a normal logout. If the terminal is already hung up,
+# pbx_init may have exited on its own; let the watchdog finish the cleanup.
+if [ -n "$watchdogPid" ] && [ -t 1 ]; then
+    kill -USR1 "$watchdogPid" 2>/dev/null
+fi
+exit $initResult
