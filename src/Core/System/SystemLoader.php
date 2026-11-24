@@ -365,6 +365,7 @@ class SystemLoader extends Injectable
             $network->configureLanInDocker();
         } else {
             $network->lanConfigure();
+            $network->configureTcpKeepalive();
         }
         $this->echoResultMsg();
 

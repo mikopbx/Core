@@ -577,13 +577,6 @@ class Network extends Injectable
                 $this->loConfigure();
             }
             /**
-             * Configure TCP keepalive for faster dead connection detection.
-             * Prevents orphaned processes (sngrep, AMI clients) from consuming
-             * memory when SSH/TCP connection drops silently. (#792)
-             */
-            $this->configureTcpKeepalive();
-
-            /**
              * Configure the LAN interfaces.
              */
             $this->lanConfigure();
@@ -706,19 +699,31 @@ class Network extends Injectable
      * Configures TCP keepalive parameters for faster dead connection detection.
      *
      * Default Linux values (7200/75/9) mean a broken TCP connection takes ~2.5 hours
-     * to detect. For a PBX this causes orphaned processes (sngrep, AMI clients, WebSocket)
-     * to consume memory indefinitely after network disruption.
+     * to detect, so AMI clients, WebSocket and SIP-TCP peers that vanished silently
+     * keep their sockets and buffers that long. SSH sessions do not depend on it:
+     * dropbear runs its own keepalive (-K).
      *
      * With 60/10/6: dead connections detected in ~120 seconds.
+     * Not used in Docker: the sysctls belong to the host there and are read-only.
      *
      * @return void
      */
-    private function configureTcpKeepalive(): void
+    public function configureTcpKeepalive(): void
     {
         $sysctl = Util::which('sysctl');
-        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_time=60");
-        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_intvl=10");
-        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_probes=6");
+        $settings = [
+            'net.ipv4.tcp_keepalive_time' => 60,
+            'net.ipv4.tcp_keepalive_intvl' => 10,
+            'net.ipv4.tcp_keepalive_probes' => 6,
+        ];
+        foreach ($settings as $key => $value) {
+            $output = [];
+            $result = 0;
+            Processes::mwExec("$sysctl -w $key=$value", $output, $result);
+            if ($result !== 0) {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to set $key=$value: " . implode(' ', $output));
+            }
+        }
     }
 
     /**
