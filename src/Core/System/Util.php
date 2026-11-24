@@ -633,14 +633,16 @@ class Util
             $arrPaths = explode(' ', $parameters);
             if (count($arrPaths) > 0) {
                 foreach ($arrPaths as $path) {
-                    if (
-                        !empty($path)
-                        && !file_exists($path)
-                        && !mkdir($path, 0755, true)
-                        && !is_dir($path)
-                    ) {
-                        $result = false;
-                        SystemMessages::sysLogMsg(__METHOD__, 'Error on create folder ' . $path, LOG_ERR);
+                    if (!empty($path) && !file_exists($path)) {
+                        $error = null;
+                        if (!self::mkdirRaceSafe($path, $error)) {
+                            $result = false;
+                            SystemMessages::sysLogMsg(
+                                __METHOD__,
+                                'Error on create folder ' . $path . ': ' . ($error ?? 'unknown error'),
+                                LOG_ERR
+                            );
+                        }
                     }
                     if ($addWWWRights) {
                         self::addRegularWWWRights($path);
@@ -650,6 +652,36 @@ class Util
         }
 
         return $result;
+    }
+
+    /**
+     * Creates a directory, accepting one another process created in the meantime.
+     *
+     * mkdir() reports the lost race with an E_WARNING that Whoops turns into an exception
+     * before the caller can re-check is_dir() (issue #1348). A scoped handler captures the
+     * warning instead: a path that is a directory afterwards counts as created, any other
+     * failure goes back to the caller together with the captured cause.
+     *
+     * @param string $path The directory to create, parent directories included.
+     * @param string|null $error The captured warning text when creation failed.
+     *
+     * @return bool True if the path is a directory after the call.
+     */
+    private static function mkdirRaceSafe(string $path, ?string &$error): bool
+    {
+        $error = null;
+        set_error_handler(static function (int $errno, string $errstr) use (&$error): bool {
+            $error = $errstr;
+            return true;
+        }, E_WARNING);
+
+        try {
+            $created = mkdir($path, 0755, true);
+        } finally {
+            restore_error_handler();
+        }
+
+        return $created || is_dir($path);
     }
 
     /**
