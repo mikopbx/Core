@@ -49,13 +49,19 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
   # (VMware, cloud consoles) may never assert DCD/CTS, and without CLOCAL the
   # line looks permanently hung up, so getty exits and respawns silently while
   # kernel and pbx-message output still reaches the port.
+  # Each port also gets closing_wait 100 (1 s, in 1/100 s): the last close() of a
+  # port otherwise waits up to 30 s for unsent output, so any writer exiting while
+  # the line does not drain (flow control, XOFF, a UART without a backend) hangs (#1412).
   devises="$(/bin/ls /dev/ttyS* /dev/ttyAMA* 2> /dev/null)";
   for dev in $devises; do
-    # For ttyAMA (ARM) devices, setserial is not applicable — use character device check
+    # For ttyAMA (ARM) devices setserial -g does not tell a real PL011 from a phantom:
+    # a real one is bound to a device in sysfs. Never open the port to probe it, a
+    # blocking open() can hang waiting for carrier.
     case "$dev" in
       /dev/ttyAMA*)
-        if [ -c "$dev" ] && [ -w "$dev" ] && echo -n "" > "$dev" 2>/dev/null; then
+        if [ -c "$dev" ] && [ -e "/sys/class/tty/${dev#/dev/}/device" ]; then
           devName="$(/bin/busybox basename "$dev")";
+          /bin/busybox setserial "$dev" closing_wait 100 2> /dev/null;
           echo " - Configuring $devName for conditional autologin.";
           echo >> "$resFileInitTab";
           echo "::respawn:/bin/sh -c 'i=1; while [ \$i -le 20 ]; do if [ -f /etc/ssh-tty-autologin ]; then break; fi; sleep 1; i=\$((i+1)); done; exec /sbin/agetty -L -a root -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
@@ -75,6 +81,7 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
     if [ ! "$resultSetSerial" = '0' ]; then
        # If the device is recognized and not marked as 'unknown', add it to inittab.
        devName="$(/bin/busybox basename "$dev")";
+       /bin/busybox setserial "$dev" closing_wait 100 2> /dev/null;
 
        echo " - Configuring $devName for conditional autologin.";
        # Adding an entry to inittab that loops and checks for /etc/ssh-autologin at intervals.

@@ -44,8 +44,6 @@ class SystemMessages extends Injectable
         self::RESULT_SKIPPED => " \033[33;1mSKIP\033[0m \n", // Yellow for SKIPPED
         self::RESULT_WARNING => " \033[33;1mWARN\033[0m \n", // Yellow for WARNING
     ];
-    
-    private static ?array $availableSerialPorts = null;
 
     /**
      * Echoes a result message with progress dots.
@@ -64,7 +62,7 @@ class SystemMessages extends Injectable
     }
 
     /**
-     * Echoes a message and logs it to the ttyS0-ttyS5.
+     * Echoes a message to the serial console ports without ever blocking (see SerialConsole).
      *
      * @param string $message The message to echo in a serial console.
      * @param bool $echoToConsole
@@ -75,56 +73,7 @@ class SystemMessages extends Injectable
         if ($echoToConsole){
             echo $message;
         }
-        
-        // Get available serial ports (cached)
-        $serialPorts = self::getAvailableSerialPorts();
-        
-        // Strip ANSI color codes before writing to serial ports
-        $cleanMessage = preg_replace('/\033\[[0-9;]*m/', '', $message);
-        
-        // Write to available serial ports
-        foreach ($serialPorts as $device) {
-            @file_put_contents($device, $cleanMessage, FILE_APPEND);
-        }
-    }
-    
-    /**
-     * Gets available serial ports and caches the result.
-     *
-     * @return array List of available serial port devices
-     */
-    private static function getAvailableSerialPorts(): array
-    {
-        if (self::$availableSerialPorts !== null) {
-            return self::$availableSerialPorts;
-        }
-        
-        self::$availableSerialPorts = [];
-
-        // Use pbx-env-detect if available
-        $pbxEnvDetect = '/sbin/pbx-env-detect';
-        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
-            $serialPorts = trim(shell_exec("$pbxEnvDetect --serial 2>/dev/null") ?? '');
-            if (!empty($serialPorts)) {
-                self::$availableSerialPorts = explode(' ', $serialPorts);
-            }
-        } else {
-            // Fallback to old method — scan x86 (ttyS) and ARM (ttyAMA) serial ports
-            foreach (['/dev/ttyS', '/dev/ttyAMA'] as $prefix) {
-                $maxIndex = ($prefix === '/dev/ttyS') ? 5 : 3;
-                for ($i = 0; $i <= $maxIndex; $i++) {
-                    $device = "$prefix$i";
-                    if (file_exists($device) && is_writable($device)) {
-                        // Verify with actual write (is_writable only checks permissions, not hardware)
-                        if (@file_put_contents($device, "\0", FILE_APPEND) !== false) {
-                            self::$availableSerialPorts[] = $device;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return self::$availableSerialPorts;
+        SerialConsole::getDefault()->write($message);
     }
 
     /**

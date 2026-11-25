@@ -79,6 +79,17 @@ final class BootScriptsTest extends TestCase
         $this->assertSame(2, substr_count($script, 'exec /sbin/agetty -L -a root'));
     }
 
+    public function testInitBoundsSerialCloseWaitAndNeverOpensPortsToProbe(): void
+    {
+        $script = $this->script('/init');
+
+        // A last close() otherwise waits up to 30 s for output that does not drain (#1412).
+        $this->assertSame(2, substr_count($script, '/bin/busybox setserial "$dev" closing_wait 100 2> /dev/null;'));
+        // A blocking open() of a port without carrier hangs: ttyAMA is checked through sysfs.
+        $this->assertStringContainsString('[ -e "/sys/class/tty/${dev#/dev/}/device" ]', $script);
+        $this->assertStringNotContainsString('echo -n "" > "$dev"', $script);
+    }
+
     public function testBootFailureDumpsDiagnosticsAndReleasesSerialGettyAtOnce(): void
     {
         $script = $this->script('/sbin/pbx_boot_init');
