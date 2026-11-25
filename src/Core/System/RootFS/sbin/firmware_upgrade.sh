@@ -48,6 +48,8 @@ detect_upgrade_serial_port() {
         case "$_serialInfo" in
             *unknown*) continue ;;
         esac
+        # Bound the wait of a last close() for unsent output to 1 s (default 30 s, #1412)
+        $_SETSERIAL "$_DEV" closing_wait 100 >/dev/null 2>&1
         echo "$_DEV"
         return 0
     done
@@ -55,6 +57,7 @@ detect_upgrade_serial_port() {
     for _DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
         [ -c "$_DEV" ] || continue
         [ -e "/sys/class/tty/${_DEV#/dev/}/device" ] || continue
+        $_SETSERIAL "$_DEV" closing_wait 100 >/dev/null 2>&1
         echo "$_DEV"
         return 0
     done
@@ -65,11 +68,44 @@ detect_upgrade_serial_port() {
 # Detect serial port for this script's own messages (self-contained, no external deps)
 _SERIAL=$(detect_upgrade_serial_port)
 
-# Echo to both console (stdout) and serial port
+# Arguments of a 1 s SIGKILL timeout for this busybox: before 2020.3 it only knew
+# "-t SECS". SIGKILL because a caller that ignores SIGTERM passes SIG_IGN on.
+# Without a usable timeout the serial port is not written at all.
+if /bin/busybox timeout -s KILL 1 true >/dev/null 2>&1; then
+    _SERIAL_TIMEOUT="-s KILL 1"
+elif /bin/busybox timeout -t 1 -s KILL true >/dev/null 2>&1; then
+    _SERIAL_TIMEOUT="-t 1 -s KILL"
+else
+    _SERIAL=""
+fi
+
+# Echo to both console (stdout) and serial port. The serial write runs under a
+# 1 s timeout: a port whose output does not drain blocks it forever (#1412).
+# A port that timed out is dropped for the rest of the upgrade and flagged as
+# disabled until reboot, the same flag pbx-message and SerialConsole.php honour.
 _echo() {
-    local _msg="  - $*"
+    local _msg="  - $*" _rc _flag
     echo "$_msg" 2>/dev/null || true
-    [ -n "$_SERIAL" ] && { printf "%s\n" "$_msg" > "$_SERIAL"; } 2>/dev/null || true
+    [ -n "$_SERIAL" ] || return 0
+    _flag="/var/run/pbx-serial-disabled/${_SERIAL##*/}"
+    if [ -e "$_flag" ]; then
+        _SERIAL=""
+        return 0
+    fi
+    # Unquoted on purpose: _SERIAL_TIMEOUT holds several arguments
+    /bin/busybox timeout $_SERIAL_TIMEOUT /bin/sh -c 'printf "%s\n" "$1" > "$2"' _ "$_msg" "$_SERIAL" >/dev/null 2>&1
+    _rc=$?
+    # busybox timeout exits 128 + the signal number (137) when it had to kill the writer
+    if [ "$_rc" -eq 137 ]; then
+        /bin/busybox mkdir -p /var/run/pbx-serial-disabled 2>/dev/null
+        if ( set -C; printf 'reason=%s\ntime=%s\nby=%s\n' "write timed out" "$(/bin/busybox date +%s)" "firmware_upgrade" \
+            > "$_flag" ) 2>/dev/null; then
+            /bin/busybox logger -t pbx-serial -p daemon.warning \
+                "Serial console $_SERIAL disabled until reboot: write timed out." 2>/dev/null
+        fi
+        _SERIAL=""
+    fi
+    return 0
 }
 
 # Global variables

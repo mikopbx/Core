@@ -34,6 +34,8 @@ detect_upgrade_serial_port() {
         case "$serialInfo" in
             *unknown*) continue ;;
         esac
+        # Bound the wait of a last close() for unsent output to 1 s (default 30 s, #1412)
+        $SETSERIAL "$DEV" closing_wait 100 >/dev/null 2>&1
         echo "$DEV"
         return 0
     done
@@ -41,6 +43,7 @@ detect_upgrade_serial_port() {
     for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
         [ -c "$DEV" ] || continue
         [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
+        $SETSERIAL "$DEV" closing_wait 100 >/dev/null 2>&1
         echo "$DEV"
         return 0
     done
@@ -59,24 +62,57 @@ if [ -n "$SERIAL_PORT" ]; then
     fi
 fi
 
+# Arguments of a 1 s SIGKILL timeout for this busybox: before 2020.3 it only knew
+# "-t SECS". SIGKILL because a caller that ignores SIGTERM passes SIG_IGN on.
+# Without a usable timeout the serial port is not written at all.
+if /bin/busybox timeout -s KILL 1 true >/dev/null 2>&1; then
+    SERIAL_TIMEOUT="-s KILL 1"
+elif /bin/busybox timeout -t 1 -s KILL true >/dev/null 2>&1; then
+    SERIAL_TIMEOUT="-t 1 -s KILL"
+else
+    SERIAL_PORT=""
+fi
+
+# Write one line to the serial port without ever hanging the upgrade (#1412).
+# Output that does not drain (flow control with CTS low, XOFF, a UART without a
+# backend) blocks the write forever, so it runs under a 1 s timeout. A port that
+# timed out is dropped for the rest of the upgrade and flagged as disabled until
+# reboot, the same flag pbx-message and SerialConsole.php honour.
+serial_write_line() {
+    local rc flag
+    [ -n "$SERIAL_PORT" ] || return 0
+    flag="/var/run/pbx-serial-disabled/${SERIAL_PORT##*/}"
+    if [ -e "$flag" ]; then
+        SERIAL_PORT=""
+        return 0
+    fi
+    # Unquoted on purpose: SERIAL_TIMEOUT holds several arguments
+    /bin/busybox timeout $SERIAL_TIMEOUT /bin/sh -c 'printf "%s\n" "$1" > "$2"' _ "$1" "$SERIAL_PORT" >/dev/null 2>&1
+    rc=$?
+    # busybox timeout exits 128 + the signal number (137) when it had to kill the writer
+    if [ "$rc" -eq 137 ]; then
+        /bin/busybox mkdir -p /var/run/pbx-serial-disabled 2>/dev/null
+        if ( set -C; printf 'reason=%s\ntime=%s\nby=%s\n' "write timed out" "$(/bin/busybox date +%s)" "pbx_firmware" \
+            > "$flag" ) 2>/dev/null; then
+            /bin/busybox logger -t pbx-serial -p daemon.warning \
+                "Serial console $SERIAL_PORT disabled until reboot: write timed out." 2>/dev/null
+        fi
+        SERIAL_PORT=""
+    fi
+    return 0
+}
+
 echo_info() {
     local msg="  - $1"
     echo "$msg" 2>/dev/null || true
-    if [ -n "$SERIAL_PORT" ]; then
-        # Use printf for atomic write, stty to drain buffer
-        { printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true
-        stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
-    fi
+    serial_write_line "$msg"
     return 0
 }
 
 echo_error() {
     local msg="ERROR: $1"
     echo "$msg" 2>/dev/null || true
-    if [ -n "$SERIAL_PORT" ]; then
-        { printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true
-        stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
-    fi
+    serial_write_line "$msg"
     return 0
 }
 

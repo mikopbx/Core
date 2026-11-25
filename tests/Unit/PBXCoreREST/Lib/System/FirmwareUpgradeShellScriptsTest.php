@@ -210,26 +210,31 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$DEV"/', $script));
         $this->assertStringContainsString('echo "$msg" 2>/dev/null || true', $script);
         $this->assertStringContainsString('echo -n "$msg" 2>/dev/null || true', $script);
-        $this->assertStringContainsString('{ echo "$clean_msg" >> "$port"; } 2>/dev/null || true', $script);
-        $this->assertStringContainsString('{ echo -n "$clean_msg" >> "$port"; } 2>/dev/null || true', $script);
+        // Serial writes never block the caller (#1412): bounded by a timeout, a port that
+        // timed out is flagged as disabled until reboot and only the flag's creator logs.
+        $this->assertStringContainsString(
+            '/bin/busybox timeout -s KILL 1 /bin/sh -c \'printf "%s" "$1" >> "$2"\' _ "$text" "$port" 2>/dev/null',
+            $script
+        );
+        $this->assertStringContainsString('[ -e "$flag" ] && return 0', $script);
+        $this->assertStringContainsString('if [ "$rc" -eq 137 ]; then', $script);
+        $this->assertStringContainsString('( set -C; printf \'reason=%s\\ntime=%s\\nby=%s\\n\'', $script);
+        $this->assertStringContainsString('serial_write "$port" "$clean_msg"', $script);
+        $this->assertStringNotContainsString('>> "$port"; }', $script);
     }
 
-    public function testShellFunctionsFallbackDoesNotProbeSerialPortsByWritingToThem(): void
+    public function testShellFunctionsLeaveSerialPortsToPbxMessage(): void
     {
         $script = file_get_contents(self::ROOTFS_SBIN . '/shell_functions.sh');
 
         $this->assertIsString($script);
-        $this->assertStringContainsString('SETSERIAL="setserial"', $script);
-        $this->assertStringContainsString('busybox setserial', $script);
-        $this->assertStringContainsString('serialInfo=$($SETSERIAL -g "$dev" 2>/dev/null)', $script);
-        $this->assertStringContainsString('*unknown*) continue ;;', $script);
-        $this->assertStringContainsString('[ -e "/sys/class/tty/${dev#/dev/}/device" ] || continue', $script);
-        $this->assertStringContainsString('local prefixed_message="  - $message"', $script);
-        $this->assertStringContainsString('echo "$prefixed_message" 2>/dev/null || true', $script);
-        $this->assertStringContainsString('{ echo "$prefixed_message" >> "$dev"; } 2>/dev/null || true', $script);
-        $this->assertStringNotContainsString('echo -n "" > "$dev" 2>/dev/null', $script);
-        $this->assertStringNotContainsString('[ -w "$dev" ] &&', $script);
-        $this->assertStringNotContainsString('echo "$1" >> "$dev"', $script);
+        // Only pbx-message writes to serial ports, with a timeout (#1412); the old
+        // fallback wrote to them directly and could block forever.
+        $this->assertStringContainsString('/sbin/pbx-message -t info "$1"', $script);
+        $this->assertStringContainsString('echo "  - $1" 2>/dev/null || true', $script);
+        $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$dev"/', $script));
+        $this->assertStringNotContainsString('setserial', $script);
+        $this->assertStringNotContainsString('/dev/ttyS0', $script);
     }
 
     public function testPbxFirmwareDoesNotProbeSerialPortsByWritingToThem(): void
@@ -243,10 +248,22 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringContainsString('*unknown*) continue ;;', $script);
         $this->assertStringContainsString('[ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue', $script);
         $this->assertStringContainsString('echo "$msg" 2>/dev/null || true', $script);
-        $this->assertStringContainsString('{ printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true', $script);
         $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$DEV"/', $script));
         $this->assertStringNotContainsString('echo -n "" > "$DEV" 2>/dev/null', $script);
-        $this->assertStringNotContainsString('printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null', $script);
+
+        // The write and the drain run under a timeout and a timed-out port is dropped (#1412).
+        $this->assertSame(2, substr_count($script, '$SETSERIAL "$DEV" closing_wait 100 >/dev/null 2>&1'));
+        $this->assertStringContainsString('SERIAL_TIMEOUT="-s KILL 1"', $script);
+        $this->assertStringContainsString('SERIAL_TIMEOUT="-t 1 -s KILL"', $script);
+        $this->assertStringContainsString(
+            '/bin/busybox timeout $SERIAL_TIMEOUT /bin/sh -c \'printf "%s\\n" "$1" > "$2"\' _ "$1" "$SERIAL_PORT"',
+            $script
+        );
+        $this->assertStringContainsString('flag="/var/run/pbx-serial-disabled/${SERIAL_PORT##*/}"', $script);
+        $this->assertStringContainsString('if [ "$rc" -eq 137 ]; then', $script);
+        $this->assertSame(2, substr_count($script, 'serial_write_line "$msg"'));
+        $this->assertStringNotContainsString('> "$SERIAL_PORT"; }', $script);
+        $this->assertStringNotContainsString('stty -F "$SERIAL_PORT" drain', $script);
     }
 
     public function testFirmwareUpgradeConsoleOutputIsCompactAndQuiet(): void
@@ -324,9 +341,18 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringContainsString('[ -e "/sys/class/tty/${_DEV#/dev/}/device" ] || continue', $script);
         $this->assertStringContainsString('{ echo "  - MikoPBX firmware upgrade" > /dev/console; } 2>/dev/null', $script);
         $this->assertStringContainsString('echo "$_msg" 2>/dev/null || true', $script);
-        $this->assertStringContainsString('{ printf "%s\n" "$_msg" > "$_SERIAL"; } 2>/dev/null || true', $script);
         $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$_DEV"/', $script));
         $this->assertStringNotContainsString('echo -n "" > "$_DEV" 2>/dev/null', $script);
-        $this->assertStringNotContainsString('printf "%s\n" "$_msg" > "$_SERIAL" 2>/dev/null', $script);
+
+        // The write runs under a timeout and a timed-out port is dropped (#1412).
+        $this->assertSame(2, substr_count($script, '$_SETSERIAL "$_DEV" closing_wait 100 >/dev/null 2>&1'));
+        $this->assertStringContainsString('_SERIAL_TIMEOUT="-s KILL 1"', $script);
+        $this->assertStringContainsString(
+            '/bin/busybox timeout $_SERIAL_TIMEOUT /bin/sh -c \'printf "%s\\n" "$1" > "$2"\' _ "$_msg" "$_SERIAL"',
+            $script
+        );
+        $this->assertStringContainsString('_flag="/var/run/pbx-serial-disabled/${_SERIAL##*/}"', $script);
+        $this->assertStringContainsString('if [ "$_rc" -eq 137 ]; then', $script);
+        $this->assertStringNotContainsString('> "$_SERIAL"; }', $script);
     }
 }

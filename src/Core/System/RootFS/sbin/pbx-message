@@ -40,6 +40,10 @@ MESSAGE=""
 SERIAL_CACHE="/etc/.pbx_serial_ports"
 SERIAL_CHECK_AGE=300  # Re-check every 5 minutes
 
+# Serial ports a writer gave up on stay disabled until reboot (#1412); the same
+# flags are honoured by SerialConsole.php and the upgrade scripts.
+SERIAL_DISABLED_DIR="/var/run/pbx-serial-disabled"
+
 # ANSI color codes. They must hold a real ESC byte: busybox echo does not
 # interpret "\033", so the literal text used to reach the serial port and the
 # syslog untouched (the strip filter below matches the ESC byte, not "\033").
@@ -174,6 +178,30 @@ output_console() {
     fi
 }
 
+# serial_write: write text to a serial port without hanging the caller (#1412).
+# Output that does not drain (flow control with CTS low, XOFF, a UART without a
+# backend) blocks open()/write() forever, so the write runs under a 1 s timeout.
+# A port that timed out is disabled for the whole system until reboot; only the
+# writer that creates the flag logs it, so a dead port gives one warning per boot.
+# Args: $1 port, $2 text
+serial_write() {
+    local port="$1" text="$2" flag rc
+    flag="$SERIAL_DISABLED_DIR/${port##*/}"
+    [ -e "$flag" ] && return 0
+    # SIGKILL: a caller that ignores SIGTERM (e.g. started by monit) passes SIG_IGN on
+    /bin/busybox timeout -s KILL 1 /bin/sh -c 'printf "%s" "$1" >> "$2"' _ "$text" "$port" 2>/dev/null
+    rc=$?
+    # busybox timeout exits 128 + the signal number (137) when it had to kill the writer
+    if [ "$rc" -eq 137 ]; then
+        /bin/busybox mkdir -p "$SERIAL_DISABLED_DIR" 2>/dev/null
+        if ( set -C; printf 'reason=%s\ntime=%s\nby=%s\n' "write timed out" "$(/bin/busybox date +%s)" "pbx-message" > "$flag" ) 2>/dev/null; then
+            /bin/busybox logger -t pbx-serial -p daemon.warning \
+                "Serial console $port disabled until reboot: write timed out. Run pbx-serial-check for details." 2>/dev/null
+        fi
+    fi
+    return 0
+}
+
 # Function to output to serial ports
 output_serial() {
     local msg="$1"
@@ -202,9 +230,10 @@ output_serial() {
     for port in $SERIAL_PORTS; do
         [ "$port" = "$skip_port" ] && continue
         if [ "$newline" = "1" ]; then
-            { echo "$clean_msg" >> "$port"; } 2>/dev/null || true
+            serial_write "$port" "$clean_msg
+"
         else
-            { echo -n "$clean_msg" >> "$port"; } 2>/dev/null || true
+            serial_write "$port" "$clean_msg"
         fi
     done
 }
