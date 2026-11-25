@@ -34,6 +34,11 @@ use Phalcon\Di\Injectable;
 class PBXInstaller extends Injectable
 {
     /**
+     * Minimum target disk size in MB: the unpacked firmware.img is 601 MiB (#1427).
+     */
+    private const int MIN_DISK_SIZE_MB = 601;
+
+    /**
      * Access to the /etc/inc/mikopbx-settings.json values
      *
      * @var \Phalcon\Config\Config
@@ -109,14 +114,14 @@ class PBXInstaller extends Injectable
             $other_info = "[ \033[31;1m$other_info\033[0m ]";
         }
 
+        // Ignore disks smaller than the firmware image, before they can become the default choice
+        if ($disk['size'] < self::MIN_DISK_SIZE_MB) {
+            return;
+        }
+
         // Update the selected disk if the current disk's size is smaller
         if ($this->selected_disk['size'] === 0 || $this->selected_disk['size'] > $disk['size']) {
             $this->selected_disk = $disk;
-        }
-
-        // Ignore disks that are less than 400 megabytes
-        if ($disk['size'] < 400) {
-            return;
         }
 
         // Add the disk to the list of valid disks
