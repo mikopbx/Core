@@ -202,11 +202,10 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $script = file_get_contents(self::ROOTFS_SBIN . '/pbx-message');
 
         $this->assertIsString($script);
-        $this->assertStringContainsString('SETSERIAL="setserial"', $script);
-        $this->assertStringContainsString('busybox setserial', $script);
-        $this->assertStringContainsString('serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)', $script);
-        $this->assertStringContainsString('*unknown*) continue ;;', $script);
-        $this->assertStringContainsString('[ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue', $script);
+        // Port detection and validation live in pbx-env-detect only (#1412).
+        $this->assertStringContainsString('/sbin/pbx-env-detect --serial 2>/dev/null', $script);
+        $this->assertStringNotContainsString('setserial', $script);
+        $this->assertStringNotContainsString('.pbx_serial_ports', $script);
         $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$DEV"/', $script));
         $this->assertStringContainsString('echo "$msg" 2>/dev/null || true', $script);
         $this->assertStringContainsString('echo -n "$msg" 2>/dev/null || true', $script);

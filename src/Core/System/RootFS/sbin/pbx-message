@@ -36,12 +36,8 @@ SYSLOG_LEVEL="info"
 SYSLOG_IDENT="pbx-message"
 MESSAGE=""
 
-# Cache file for serial port availability
-SERIAL_CACHE="/etc/.pbx_serial_ports"
-SERIAL_CHECK_AGE=300  # Re-check every 5 minutes
-
 # Serial ports a writer gave up on stay disabled until reboot (#1412); the same
-# flags are honoured by SerialConsole.php and the upgrade scripts.
+# flags are honoured by SerialConsole.php and pbx-env-detect.
 SERIAL_DISABLED_DIR="/var/run/pbx-serial-disabled"
 
 # ANSI color codes. They must hold a real ESC byte: busybox echo does not
@@ -95,75 +91,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# Function to check if running in Docker
-is_docker() {
-    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]
-}
-
-# Function to check if running in LXC
-is_lxc() {
-    [ "$container" = 'lxc' ]
-}
-
-# Function to check if we're in a container (Docker or LXC)
-# Matches PHP System::isContainer() - true for any container environment
-is_container() {
-    is_docker || is_lxc
-}
-
-# Function to get available serial ports with caching
+# Function to get the serial ports that accept console output. pbx-env-detect is
+# the single source: it skips Docker/LXC, phantom and blocked ports and the ones
+# a writer disabled, and caches the answer briefly.
 get_serial_ports() {
-    # Check if cache exists and is recent
-    if [ -f "$SERIAL_CACHE" ]; then
-        CACHE_AGE=$(($(date +%s) - $(stat -c %Y "$SERIAL_CACHE" 2>/dev/null || echo 0)))
-        if [ "$CACHE_AGE" -lt "$SERIAL_CHECK_AGE" ]; then
-            cat "$SERIAL_CACHE"
-            return
-        fi
-    fi
-
-    # Skip serial port detection in Docker (runtime manages output)
-    if is_docker; then
-        { echo "" > "$SERIAL_CACHE"; } 2>/dev/null || true
-        return
-    fi
-
-    # LXC: stdout is already connected to /dev/tty1 (Proxmox console)
-    # Writing to /dev/tty1 separately would cause duplicate output
-    # So for LXC we return empty - stdout handles console output
-    if is_lxc; then
-        { echo "" > "$SERIAL_CACHE"; } 2>/dev/null || true
-        return
-    fi
-
-    # Bare-metal: find available serial ports without opening them for write.
-    # Phantom ttyS devices can be writable but fail or block on write/open.
-    SERIAL_PORTS=""
-    SETSERIAL="setserial"
-    command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
-    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
-        [ -c "$DEV" ] || continue
-        serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)
-        [ -z "$serialInfo" ] && continue
-        case "$serialInfo" in
-            *unknown*) continue ;;
-        esac
-        SERIAL_PORTS="$SERIAL_PORTS $DEV"
-    done
-
-    for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-        [ -c "$DEV" ] || continue
-        [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
-        if [ -z "$SERIAL_PORTS" ]; then
-            SERIAL_PORTS="$DEV"
-        else
-            SERIAL_PORTS="$SERIAL_PORTS $DEV"
-        fi
-    done
-
-    # Cache the results
-    { echo "$SERIAL_PORTS" > "$SERIAL_CACHE"; } 2>/dev/null || true
-    echo "$SERIAL_PORTS"
+    /sbin/pbx-env-detect --serial 2>/dev/null
 }
 
 # Function to output to console

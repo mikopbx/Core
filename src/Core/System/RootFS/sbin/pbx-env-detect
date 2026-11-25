@@ -21,7 +21,8 @@
 # Usage: pbx-env-detect [option]
 # Options:
 #   -t, --type        Return environment type (docker, vmware, vbox, kvm, qemu, xen, baremetal)
-#   -s, --serial      Return available serial ports
+#   -s, --serial      Return serial ports that accept console output
+#   --serial-status   Return the state of every serial port, one line per port
 #   -c, --console     Return console device
 #   -r, --arch        Return CPU architecture (x86_64, aarch64, armv7l, etc)
 #   -a, --all         Return all environment information
@@ -29,6 +30,15 @@
 # Cache file for environment detection
 ENV_CACHE="/etc/.pbx_env_info"
 ENV_CHECK_AGE=3600  # Re-check every hour
+
+# Serial console state (#1412). The line state changes at runtime, so it is cached
+# apart from the environment and only briefly. Flags in SERIAL_DISABLED_DIR are
+# written by the writers (SerialConsole.php, pbx-message, the upgrade scripts) for a
+# port whose output never drained; such a port stays disabled until reboot.
+SERIAL_STATUS_CACHE="/var/run/pbx-serial-status"
+SERIAL_STATUS_AGE=60
+SERIAL_DISABLED_DIR="/var/run/pbx-serial-disabled"
+SERIAL_PROC_DIR="/proc/tty/driver"
 
 # Parse command line options
 OPTION="type"
@@ -40,6 +50,9 @@ while [ $# -gt 0 ]; do
             ;;
         -s|--serial)
             OPTION="serial"
+            ;;
+        --serial-status)
+            OPTION="serial-status"
             ;;
         -c|--console)
             OPTION="console"
@@ -55,15 +68,16 @@ while [ $# -gt 0 ]; do
             ;;
         *)
             echo "Unknown option: $1" >&2
-            echo "Usage: $0 [-t|--type] [-s|--serial] [-c|--console] [-r|--arch] [-a|--all] [--nocache]" >&2
+            echo "Usage: $0 [-t|--type] [-s|--serial] [--serial-status] [-c|--console] [-r|--arch] [-a|--all] [--nocache]" >&2
             exit 1
             ;;
     esac
     shift
 done
 
-# Function to detect environment type
-detect_environment() {
+# Function to detect a container: prints "docker" or "lxc", nothing otherwise.
+# Needs only /bin tools, so the serial port checks can use it at early boot.
+detect_container() {
     # Check for Docker
     if [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]; then
         echo "docker"
@@ -83,6 +97,16 @@ detect_environment() {
             echo "lxc"
             return
         fi
+    fi
+}
+
+# Function to detect environment type
+detect_environment() {
+    local CONTAINER
+    CONTAINER=$(detect_container)
+    if [ -n "$CONTAINER" ]; then
+        echo "$CONTAINER"
+        return
     fi
 
     # Check for virtualization using various methods
@@ -258,17 +282,10 @@ detect_architecture() {
     echo "unknown"
 }
 
-# Function to detect available serial ports
-detect_serial_ports() {
-    SERIAL_PORTS=""
-    
-    # Skip serial port detection in Docker
-    ENV_TYPE=$(detect_environment)
-    if [ "$ENV_TYPE" = "docker" ]; then
-        echo ""
-        return
-    fi
-    
+# serial_candidates: print "DEVICE UART" for every serial port backed by hardware.
+serial_candidates() {
+    local DEV serialInfo uart SETSERIAL
+
     # Detect x86 (ttyS*) ports via setserial. NEVER open the device directly
     # (e.g. `printf > /dev/ttyS0`): a blocking open() hangs FOREVER waiting for
     # carrier (DCD) when CLOCAL is unset — common on VPS/QEMU where /dev/ttyS0
@@ -285,11 +302,8 @@ detect_serial_ports() {
         case "$serialInfo" in
             *unknown*) continue ;;
         esac
-        if [ -z "$SERIAL_PORTS" ]; then
-            SERIAL_PORTS="$DEV"
-        else
-            SERIAL_PORTS="$SERIAL_PORTS $DEV"
-        fi
+        uart=$(echo "$serialInfo" | sed -n 's/.*UART: *\([^,]*\).*/\1/p')
+        echo "$DEV ${uart:-8250}"
     done
 
     # ARM (ttyAMA*) ports: setserial does not apply (PL011 is not an 8250 UART).
@@ -301,14 +315,121 @@ detect_serial_ports() {
     for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
         [ -c "$DEV" ] || continue
         [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
-        if [ -z "$SERIAL_PORTS" ]; then
-            SERIAL_PORTS="$DEV"
-        else
-            SERIAL_PORTS="$SERIAL_PORTS $DEV"
-        fi
+        echo "$DEV PL011"
     done
-    
-    echo "$SERIAL_PORTS"
+}
+
+# serial_port_status: print one status line for a serial port:
+#   DEVICE STATE uart=.. tx=.. signals=.. crtscts=.. clocal=.. reason=free text
+# STATE is "ok" (output can leave the port), "blocked" (the line state stops
+# output right now) or "disabled" (a writer gave up on it until reboot).
+# Only the driver's line state and termios are read; nothing is written to the
+# port. Whether anybody listens on the other end cannot be told reliably.
+# Args: $1 device, $2 UART type
+serial_port_status() {
+    local dev="$1" uart="$2" name drv idx line tx sig modes crtscts clocal state reason
+    name="${dev##*/}"
+    case "$name" in
+        ttyS*) drv="serial"; idx="${name#ttyS}" ;;
+        *) drv="ttyAMA"; idx="${name#ttyAMA}" ;;
+    esac
+
+    # /proc/tty/driver/<drv>: "0: uart:16550A port:000003F8 irq:4 tx:123 rx:0 RTS|CTS|DTR|DSR|CD"
+    line=$(grep "^${idx}:" "$SERIAL_PROC_DIR/$drv" 2>/dev/null)
+    tx=$(echo "$line" | sed -n 's/.* tx:\([0-9]*\).*/\1/p')
+    sig="${line##* }"
+    case "$sig" in
+        *[!A-Z\|]*|'') sig="" ;;
+    esac
+
+    # termios matters only when CTS or CD is missing. stty only reads here and opens
+    # the port with O_NONBLOCK; the timeout (SIGKILL) is a safety net.
+    crtscts="-"
+    clocal="-"
+    case "|$sig|" in
+        *"|CTS|"*"|CD|"*|*"|CD|"*"|CTS|"*) ;;
+        *)
+            modes=$(/bin/busybox timeout -s KILL 2 stty -F "$dev" -a 2>/dev/null)
+            case " $(echo $modes) " in
+                *" -crtscts "*) crtscts=0 ;;
+                *" crtscts "*) crtscts=1 ;;
+            esac
+            case " $(echo $modes) " in
+                *" -clocal "*) clocal=0 ;;
+                *" clocal "*) clocal=1 ;;
+            esac
+            ;;
+    esac
+
+    state="ok"
+    reason="-"
+    if [ -e "$SERIAL_DISABLED_DIR/$name" ]; then
+        state="disabled"
+        reason=$(sed -n 's/^reason=//p' "$SERIAL_DISABLED_DIR/$name" 2>/dev/null)
+        reason="${reason:-unknown}, until reboot"
+    elif [ "$crtscts" = "1" ] && ! serial_has_signal "$sig" CTS; then
+        state="blocked"
+        reason="hardware flow control (crtscts) is on and CTS is not asserted"
+    elif [ "$clocal" = "0" ] && ! serial_has_signal "$sig" CD; then
+        state="blocked"
+        reason="clocal is off and there is no carrier (CD): open() would wait for it"
+    fi
+    [ "$state" = "blocked" ] && serial_log_blocked_once "$dev" "$reason"
+
+    echo "$dev $state uart=$uart tx=${tx:--} signals=${sig:--} crtscts=$crtscts clocal=$clocal reason=$reason"
+}
+
+# serial_has_signal: true when the modem signal $2 is in the "|"-list $1
+serial_has_signal() {
+    case "|$1|" in
+        *"|$2|"*) return 0 ;;
+    esac
+    return 1
+}
+
+# serial_log_blocked_once: log a blocked port once per boot. The state is checked
+# again on every cache refresh, and a line that stays blocked must not repeat it.
+serial_log_blocked_once() {
+    /bin/busybox mkdir -p "$SERIAL_DISABLED_DIR" 2>/dev/null
+    if ( set -C; : > "$SERIAL_DISABLED_DIR/.blocked-${1##*/}" ) 2>/dev/null; then
+        /bin/busybox logger -t pbx-serial -p daemon.warning \
+            "Serial console $1 not used: $2. Run pbx-serial-check for details." 2>/dev/null
+    fi
+}
+
+# serial_status: status lines of every serial port, cached for SERIAL_STATUS_AGE
+serial_status() {
+    local out tmp
+    if [ "$NO_CACHE" -eq 0 ] && [ -f "$SERIAL_STATUS_CACHE" ]; then
+        CACHE_AGE=$(($(date +%s) - $(/bin/busybox stat -c %Y "$SERIAL_STATUS_CACHE" 2>/dev/null || echo 0)))
+        if [ "$CACHE_AGE" -lt "$SERIAL_STATUS_AGE" ]; then
+            cat "$SERIAL_STATUS_CACHE"
+            return
+        fi
+    fi
+
+    # Containers have no serial console of their own
+    if [ -n "$(detect_container)" ]; then
+        out=""
+    else
+        out=$(serial_candidates | while read -r dev uart; do serial_port_status "$dev" "$uart"; done)
+    fi
+
+    if [ "$NO_CACHE" -eq 0 ]; then
+        tmp="$SERIAL_STATUS_CACHE.$$"
+        { printf '%s' "${out:+$out
+}" > "$tmp" && mv -f "$tmp" "$SERIAL_STATUS_CACHE"; } 2>/dev/null || rm -f "$tmp" 2>/dev/null
+    fi
+    [ -n "$out" ] && echo "$out"
+}
+
+# serial_ports: devices of the ports that accept console output, space-separated.
+# Shell builtins only: pbx-message calls this at early boot, before /usr (awk) is mounted.
+serial_ports() {
+    local dev state rest ports=""
+    serial_status | while read -r dev state rest; do
+        [ "$state" = "ok" ] && printf '%s ' "$dev"
+    done | { read -r ports; echo "$ports"; }
 }
 
 # Function to detect console device
@@ -329,7 +450,7 @@ detect_console() {
 get_env_info() {
     # Check if cache exists and is recent (skip if --nocache)
     if [ "$NO_CACHE" -eq 0 ] && [ -f "$ENV_CACHE" ]; then
-        CACHE_AGE=$(($(date +%s) - $(stat -c %Y "$ENV_CACHE" 2>/dev/null || echo 0)))
+        CACHE_AGE=$(($(date +%s) - $(/bin/busybox stat -c %Y "$ENV_CACHE" 2>/dev/null || echo 0)))
         if [ "$CACHE_AGE" -lt "$ENV_CHECK_AGE" ]; then
             cat "$ENV_CACHE"
             return
@@ -338,7 +459,6 @@ get_env_info() {
 
     # Generate fresh environment info
     ENV_TYPE=$(detect_environment)
-    SERIAL_PORTS=$(detect_serial_ports)
     CONSOLE=$(detect_console)
     ARCH=$(detect_architecture)
 
@@ -346,7 +466,6 @@ get_env_info() {
     if [ "$NO_CACHE" -eq 0 ] && [ -n "$ENV_TYPE" ]; then
         cat > "$ENV_CACHE" << EOF
 ENV_TYPE=$ENV_TYPE
-SERIAL_PORTS=$SERIAL_PORTS
 CONSOLE=$CONSOLE
 ARCH=$ARCH
 EOF
@@ -355,7 +474,6 @@ EOF
     # Return current values
     cat << EOF
 ENV_TYPE=$ENV_TYPE
-SERIAL_PORTS=$SERIAL_PORTS
 CONSOLE=$CONSOLE
 ARCH=$ARCH
 EOF
@@ -367,7 +485,10 @@ case "$OPTION" in
         get_env_info | grep "^ENV_TYPE=" | cut -d'=' -f2
         ;;
     serial)
-        get_env_info | grep "^SERIAL_PORTS=" | cut -d'=' -f2
+        serial_ports
+        ;;
+    serial-status)
+        serial_status
         ;;
     console)
         get_env_info | grep "^CONSOLE=" | cut -d'=' -f2
@@ -377,6 +498,7 @@ case "$OPTION" in
         ;;
     all)
         get_env_info
+        echo "SERIAL_PORTS=$(serial_ports)"
         ;;
 esac
 

@@ -35,8 +35,18 @@ and DHCP clients, process/storage helpers, and the rootfs overlay in `RootFS/`.
 - `RootFS/` is the rootfs overlay shipped in the image. Match the shebang of the script
   you edit: most are `#!/bin/sh` (BusyBox), a few (`pbx_boot_init`) are bash.
 - `pbx_boot_init` redirects I/O to `/dev/console` only if a test write succeeds
-  (VMware VMs without serial). Serial output goes through `pbx-message`, which skips
-  Docker/LXC and caches detected ports in `/etc/.pbx_serial_ports`.
-- `pbx-env-detect` caches its answer in `/etc/.pbx_env_info`; pass `--nocache` after
-  changing detection logic or you will debug the old result.
+  (VMware VMs without serial). Serial output goes through `pbx-message` (shell) and
+  `SerialConsole` (PHP); both take ports from `pbx-env-detect --serial`.
+- A serial port whose output does not drain blocks a plain `open()`/`write()` forever
+  (#1412). Never write to `/dev/ttyS*`/`/dev/ttyAMA*` directly: PHP opens with
+  `O_NONBLOCK` (`fopen($dev, 'an')`), shell writes run under `busybox timeout -s KILL 1`
+  (SIGTERM may be ignored by the caller; the exit code is then 137). Use only `/bin`
+  tools or `/bin/busybox <applet>` there: `awk`, `tr`, `stat` live in `/usr`, which is
+  not mounted at early boot. Never change termios with `stty` on a live port (it waits
+  for the queue to drain); reading with `stty -F dev -a` is fine. A writer that gives up flags the port in
+  `/var/run/pbx-serial-disabled/<tty>` until reboot and logs once; `pbx-serial-check`
+  shows every port's state, probes it and `--enable`s a flagged one.
+- `pbx-env-detect` caches its answer in `/etc/.pbx_env_info` (1 h) and the serial port
+  states in `/var/run/pbx-serial-status` (60 s); pass `--nocache` after changing
+  detection logic or you will debug the old result.
 - `PBX.php` is deprecated and kept only for legacy modules; do not add to it.

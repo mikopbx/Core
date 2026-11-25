@@ -1,0 +1,153 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Serial console diagnostics (#1412).
+# Usage:
+#   pbx-serial-check [--no-probe] [DEVICE]   show the state of every (or one) serial port
+#   pbx-serial-check --enable DEVICE         re-enable a port a writer disabled until reboot
+#
+# The state comes from pbx-env-detect --serial-status (line state and termios, nothing
+# written). The probe then writes one NUL byte under a 1 s timeout and checks that the
+# driver's transmit counter grows, i.e. that output really leaves the port. Whether
+# anybody listens on the other end cannot be told: a hypervisor port without a backend
+# that drops the bytes reports "drains" as well.
+
+SERIAL_DISABLED_DIR="/var/run/pbx-serial-disabled"
+SERIAL_STATUS_CACHE="/var/run/pbx-serial-status"
+
+PROBE=1
+ENABLE=""
+DEVICE=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --no-probe) PROBE=0 ;;
+        --enable)
+            ENABLE=1
+            ;;
+        -h|--help)
+            sed -n '21,23p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        /dev/*) DEVICE="$1" ;;
+        tty*) DEVICE="/dev/$1" ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# status_field: value of key $2 in status line $1
+status_field() {
+    echo "$1" | sed -n "s/.* $2=\([^ ]*\).*/\1/p"
+}
+
+# port_status: fresh status line of a port
+port_status() {
+    /sbin/pbx-env-detect --serial-status --nocache 2>/dev/null | /bin/busybox awk -v dev="$1" '$1 == dev'
+}
+
+# getty_pid: pid of the agetty serving the port, if any
+getty_pid() {
+    local pid cmdline
+    for pid in /proc/[0-9]*; do
+        cmdline=$(/bin/busybox tr '\0' ' ' < "$pid/cmdline" 2>/dev/null)
+        case "$cmdline" in
+            "/sbin/agetty "*" ${1##*/} "*)
+                echo "${pid#/proc/}"
+                return
+                ;;
+        esac
+    done
+}
+
+# probe: does output leave the port? Prints the verdict.
+probe() {
+    local dev="$1" tx0="$2" rc after tx1
+    if [ "$tx0" = "-" ]; then
+        echo "not possible, the driver does not report a transmit counter"
+        return
+    fi
+    /bin/busybox timeout -s KILL 1 /bin/sh -c 'printf "\0" >> "$1"' _ "$dev" 2>/dev/null
+    rc=$?
+    /bin/busybox usleep 200000
+    after=$(port_status "$dev")
+    tx1=$(status_field "$after" tx)
+    if [ "$rc" -eq 137 ]; then
+        echo "FAILED, the write blocked for 1 s (tx $tx0 -> $tx1)"
+    elif [ "$rc" -ne 0 ]; then
+        echo "FAILED, the port cannot be opened or written (exit $rc)"
+    elif [ -n "$tx1" ] && [ "$tx1" != "-" ] && [ "$tx1" -gt "$tx0" ]; then
+        echo "output drains (tx $tx0 -> $tx1)"
+    else
+        echo "FAILED, output does not leave the port (tx $tx0 -> ${tx1:--}): flow control, XOFF or a dead UART"
+    fi
+}
+
+# show: print the state of one port from its status line
+show() {
+    local line="$1" dev state signals peer getty
+    dev="${line%% *}"
+    state=$(echo "$line" | /bin/busybox awk '{print $2}')
+    signals=$(status_field "$line" signals)
+    case "|$signals|" in
+        *"|DSR|"*|*"|CD|"*) peer="likely (DSR/CD asserted)" ;;
+        *) peer="unknown" ;;
+    esac
+    getty=$(getty_pid "$dev")
+    echo "$dev: $state"
+    echo "  reason:   ${line#* reason=}"
+    echo "  uart:     $(status_field "$line" uart)"
+    echo "  tx bytes: $(status_field "$line" tx)"
+    echo "  signals:  $signals"
+    echo "  crtscts:  $(status_field "$line" crtscts)   clocal: $(status_field "$line" clocal)   (- = not checked)"
+    echo "  getty:    ${getty:-none}"
+    echo "  peer:     $peer"
+    if [ "$PROBE" = "1" ]; then
+        echo "  probe:    $(probe "$dev" "$(status_field "$line" tx)")"
+    fi
+}
+
+if [ -n "$ENABLE" ]; then
+    if [ -z "$DEVICE" ]; then
+        echo "Usage: $0 --enable DEVICE" >&2
+        exit 1
+    fi
+    rm -f "$SERIAL_DISABLED_DIR/${DEVICE##*/}" "$SERIAL_DISABLED_DIR/.blocked-${DEVICE##*/}" "$SERIAL_STATUS_CACHE"
+    /bin/busybox logger -t pbx-serial -p daemon.info "Serial console $DEVICE re-enabled by pbx-serial-check" 2>/dev/null
+    echo "$DEVICE re-enabled; running processes pick it up within 60 s."
+fi
+
+STATUS=$(/sbin/pbx-env-detect --serial-status --nocache 2>/dev/null)
+if [ -n "$DEVICE" ]; then
+    STATUS=$(echo "$STATUS" | /bin/busybox awk -v dev="$DEVICE" '$1 == dev')
+    if [ -z "$STATUS" ]; then
+        echo "$DEVICE: not a serial port with hardware behind it (absent, phantom or in a container)"
+        exit 1
+    fi
+fi
+if [ -z "$STATUS" ]; then
+    echo "No serial ports with hardware behind them."
+    exit 0
+fi
+
+echo "$STATUS" | while IFS= read -r line; do
+    show "$line"
+done
