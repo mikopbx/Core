@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Auth;
 
 use MikoPBX\Common\Library\Auth\RedisTokenStorage;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -136,13 +137,12 @@ class RefreshAction
 
         $userId = $sessionParams[SessionController::USER_NAME] ?? '';
 
-        // Determine language for JWT payload
-        // Priority: 1) stored in refresh token, 2) system settings (backward compatibility)
-        $language = isset($sessionParams['language']) && is_string($sessionParams['language'])
-            ? $sessionParams['language']
-            : \MikoPBX\Common\Models\PbxSettings::getValueByKey(\MikoPBX\Common\Models\PbxSettings::WEB_ADMIN_LANGUAGE);
-
-        // Update session params with language (ensures it's preserved during rotation)
+        // The interface language is the system-wide WEB_ADMIN_LANGUAGE: pages rendered by
+        // AdminCabinet read it directly. A language captured in the refresh session at login
+        // goes stale after system:changeLanguage (the API worker cannot reach the refresh
+        // cookie to update it), and the page reload that follows obtains its access token
+        // here, so REST-translated strings stayed in the old language until re-login.
+        $language = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         $sessionParams['language'] = $language;
 
         // Generate new JWT access token
