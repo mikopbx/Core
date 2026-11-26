@@ -85,14 +85,6 @@ const LanguageSelect = {
                     // Update current language
                     LanguageSelect.currentLanguage = value;
 
-                    // If new access token returned, update it in TokenManager
-                    if (response.data && response.data.accessToken && window.TokenManager) {
-                        window.TokenManager.setAccessToken(
-                            response.data.accessToken,
-                            response.data.expiresIn || 900
-                        );
-                    }
-
                     // Trigger ConfigDataChanged event
                     const event = document.createEvent('Event');
                     event.initEvent('ConfigDataChanged', false, true);

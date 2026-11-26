@@ -23,17 +23,14 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\LanguageProvider;
-use MikoPBX\PBXCoreREST\Lib\Auth\JWTHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
 
 /**
- * ChangeLanguageAction - updates system language and returns new JWT
+ * ChangeLanguageAction - updates the system interface language (WEB_ADMIN_LANGUAGE)
  *
- * This action:
- * 1. Updates WEB_ADMIN_LANGUAGE system setting
- * 2. Generates new JWT token with updated language (if user is JWT-authenticated)
- * 3. Returns success status with optional new token
+ * No access token is returned: the action runs in WorkerApiCommands without the caller's JWT,
+ * and the client reloads the page anyway; auth:refresh then issues a token with the new
+ * language (see RefreshAction).
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
@@ -43,7 +40,7 @@ class ChangeLanguageAction
      * Change system language
      *
      * @param array<string, mixed> $data Request data with language field
-     * @return PBXApiResult Result with success status and optional new JWT token
+     * @return PBXApiResult Result with success status
      */
     public static function main(array $data): PBXApiResult
     {
@@ -76,10 +73,6 @@ class ChangeLanguageAction
             // Return language code and representation (like networkfilterid pattern)
             $res->data['WEB_ADMIN_LANGUAGE'] = $newLanguage;
             $res->data['WEB_ADMIN_LANGUAGE_represent'] = self::getLanguageRepresentation($newLanguage, $availableLanguages);
-
-            // Generate new JWT token if user is JWT-authenticated
-            self::updateJwtLanguageIfNeeded($newLanguage, $res);
-
         } catch (\Exception $e) {
             $res->messages['error'][] = "Failed to update language: " . $e->getMessage();
         }
@@ -106,49 +99,5 @@ class ChangeLanguageAction
 
         // Return HTML with flag icon (Fomantic UI flag format)
         return '<i class="flag ' . $flag . '"></i> ' . $name;
-    }
-
-    /**
-     * Generate new JWT with updated language for JWT-authenticated users
-     *
-     * @param string $newLanguage New language code
-     * @param PBXApiResult $res API result object to update
-     * @return void
-     */
-    private static function updateJwtLanguageIfNeeded(string $newLanguage, PBXApiResult $res): void
-    {
-        $di = Di::getDefault();
-        if ($di === null || !$di->has('request')) {
-            return;
-        }
-
-        $request = $di->getShared('request');
-
-        // Check if request has JWT payload (user is JWT-authenticated)
-        if (!method_exists($request, 'getJwtPayload')) {
-            return;
-        }
-
-        $jwtPayload = $request->getJwtPayload();
-        if ($jwtPayload === null) {
-            return; // Not JWT-authenticated
-        }
-
-        // Generate new JWT with updated language
-        $newPayload = array_merge($jwtPayload, [
-            'language' => $newLanguage
-        ]);
-
-        // Generate new access token
-        $accessToken = JWTHelper::generate(
-            $newPayload,
-            JWTHelper::ACCESS_TOKEN_TTL
-        );
-
-        // Add token to response
-        $res->data['accessToken'] = $accessToken;
-        $res->data['tokenType'] = 'Bearer';
-        $res->data['expiresIn'] = JWTHelper::ACCESS_TOKEN_TTL;
-        $res->messages['info'][] = 'New access token generated with updated language';
     }
 }
