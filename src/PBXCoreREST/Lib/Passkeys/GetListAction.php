@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Passkeys;
 use MikoPBX\Common\Models\UserPasskeys;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\PBXCoreREST\Lib\Common\ServerTimeMeta;
 
 /**
  * Get List of Passkeys Action
@@ -65,10 +66,7 @@ class GetListAction
         // render timestamps in server TZ regardless of the browser locale)
         $res->data = [
             'items' => PasskeyDataStructure::getList($passkeys),
-            '_meta' => [
-                'server_timezone' => date_default_timezone_get(),
-                'server_timezone_offset' => (new \DateTime())->getOffset(),
-            ],
+            '_meta' => ServerTimeMeta::build(),
         ];
         $res->success = true;
 

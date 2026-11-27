@@ -192,6 +192,11 @@ abstract class BrowserStackTest extends TestCase
             }
         }
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
+        // Browser timezone, e.g. to check that the UI follows the PBX day from another zone
+        $timezone = getenv('BROWSERSTACK_TIMEZONE');
+        if ($timezone !== false && $timezone !== '') {
+            $caps['browserstack.timezone'] = $timezone;
+        }
         return $caps;
     }
 

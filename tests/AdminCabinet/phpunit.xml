@@ -139,5 +139,9 @@
             <directory>Tests/PBXExtensions</directory>
         </testsuite>
 
+        <testsuite name="CallDetailRecords">
+            <file>Tests/CallDetailRecordsFilterTest.php</file>
+        </testsuite>
+
     </testsuites>
 </phpunit>

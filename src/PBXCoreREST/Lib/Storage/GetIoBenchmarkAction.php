@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Storage;
 
 use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\ServerTimeMeta;
 
 /**
  * Get the cached I/O benchmark result.
@@ -54,10 +55,7 @@ class GetIoBenchmarkAction
                 // Backfill the TZ envelope for cache files written before the
                 // _meta field was introduced — keeps the UI tooltip honest
                 // until the next manual re-run rewrites the file.
-                $decoded['_meta'] = [
-                    'server_timezone' => date_default_timezone_get(),
-                    'server_timezone_offset' => (new \DateTime())->getOffset(),
-                ];
+                $decoded['_meta'] = ServerTimeMeta::build();
             }
             $res->data = is_array($decoded) ? $decoded : null;
             $res->success = true;

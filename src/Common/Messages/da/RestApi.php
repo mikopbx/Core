@@ -1340,7 +1340,7 @@ return [
     'rest_sf_GetForSelectDesc' => 'Hent lydfiler i et rullemenuformat med kategorifiltrering',
     'rest_param_ms_use_tls' => 'Brug TLS-kryptering for en sikker forbindelse',
     'rest_param_aru_secret' => 'ARI-godkendelsesadgangskode',
-    'rest_param_cdr_dateTo' => 'Slutdato for CDR-prøveudtagningsperioden',
+    'rest_param_cdr_dateTo' => 'Slutning på perioden for CDR-poster, inklusive (hele den angivne dag eller hele det angivne sekund), i PBX lokal tid uden tidszone: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS eller YYYY-MM-DDTHH:MM:SS',
     'rest_iaxp_CreateDesc' => 'Opret en ny IAX-udbyder med de angivne forbindelsesparametre',
     'rest_schema_syslog_filter' => 'Tekst til filtrering af loglinjer',
     // Extensions specific parameters
@@ -1610,7 +1610,7 @@ return [
     'rest_system_CheckIfNewReleaseAvailable' => 'Hurtig tjek for en ny version',
     'rest_cr_UpdateDesc' => 'Totalrenovering af et eksisterende konferencerum (udskiftning af alle felter)',
     'rest_schema_provider_cid_source' => 'Kildeopkalds-ID (Fra, P-Bekræftet-Identitet, Fjern-Part-ID)',
-    'rest_param_cdr_dateFrom' => 'Startdato for CDR-prøveudtagningsperioden',
+    'rest_param_cdr_dateFrom' => 'Start på perioden for CDR-poster, inklusive, i PBX lokal tid uden tidszone: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS eller YYYY-MM-DDTHH:MM:SS',
     'rest_schema_module_disabled' => 'Modul deaktiveret',
     'rest_schema_lic_currentUsers' => 'Nuværende antal aktive brugere',
     'rest_cdr_GetMetadata' => 'Hent CDR-metadata',

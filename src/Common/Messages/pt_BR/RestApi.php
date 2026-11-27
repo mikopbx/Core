@@ -2381,8 +2381,8 @@ return [
     // CDR specific parameters
     'rest_param_cdr_id' => 'ID numérico da postagem (ex.: 718517) ou ID do link para excluir toda a conversa (ex.: mikopbx-1760784793.4627)',
     'rest_param_cdr_limit' => 'Número máximo de registros CDR a serem obtidos (padrão 50, máximo 1000)',
-    'rest_param_cdr_dateFrom' => 'Data de início do período de amostragem do CDR',
-    'rest_param_cdr_dateTo' => 'Data final do período de amostragem do CDR',
+    'rest_param_cdr_dateFrom' => 'Início do período dos registros CDR, inclusive, no horário local do PBX sem fuso horário: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS ou YYYY-MM-DDTHH:MM:SS',
+    'rest_param_cdr_dateTo' => 'Fim do período dos registros CDR, inclusive (todo o dia informado ou todo o segundo informado), no horário local do PBX sem fuso horário: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS ou YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_search' => 'Busca inteligente por CDR e extensões. Suporta prefixos para buscas precisas: src:número (origem), dst:número (destino), did:número (DID de entrada). Sem prefixo, a busca é realizada em todos os campos, incluindo nomes de funcionários e números de celular.',
     'rest_param_cdr_dst_num' => 'Filtro: número de destino',
     'rest_param_cdr_did' => 'Filtro: número DID de entrada',

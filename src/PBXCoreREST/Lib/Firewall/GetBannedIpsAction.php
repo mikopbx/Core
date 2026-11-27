@@ -19,7 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
-use DateTime;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\GeoIP2Conf;
@@ -27,6 +26,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use SQLite3;
+use MikoPBX\PBXCoreREST\Lib\Common\ServerTimeMeta;
 
 /**
  *  Class GetBannedIpsAction
@@ -67,24 +67,11 @@ class GetBannedIpsAction extends Injectable
 
         $res->data = [
             'items' => self::getBanIpWithTime(),
-            '_meta' => self::buildMeta(),
+            '_meta' => ServerTimeMeta::build(),
         ];
         $managedCache->set(self::CACHE_KEY, $res->data, self::CACHE_TTL);
 
         return $res;
-    }
-
-    /**
-     * Build the response `_meta` envelope describing the PBX server timezone.
-     *
-     * @return array{server_timezone:string, server_timezone_offset:int}
-     */
-    private static function buildMeta(): array
-    {
-        return [
-            'server_timezone' => date_default_timezone_get(),
-            'server_timezone_offset' => (new DateTime())->getOffset(),
-        ];
     }
 
     /**

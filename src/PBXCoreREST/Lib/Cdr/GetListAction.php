@@ -119,8 +119,9 @@ class GetListAction
         $idFrom = isset($data['idFrom']) ? intval($data['idFrom']) : null;
 
         // Filtering parameters
-        $dateFrom = isset($data['dateFrom']) && is_string($data['dateFrom']) ? $data['dateFrom'] : null;
-        $dateTo = isset($data['dateTo']) && is_string($data['dateTo']) ? $data['dateTo'] : null;
+        // An empty value means no bound, as before the strict date parsing
+        $dateFrom = CdrDateRange::readParameter($data['dateFrom'] ?? null);
+        $dateTo = CdrDateRange::readParameter($data['dateTo'] ?? null);
         $srcNum = isset($data['src_num']) && is_string($data['src_num']) ? $data['src_num'] : null;
         $dstNum = isset($data['dst_num']) && is_string($data['dst_num']) ? $data['dst_num'] : null;
         $disposition = isset($data['disposition']) && is_string($data['disposition']) ? $data['disposition'] : null;
@@ -128,52 +129,37 @@ class GetListAction
         $linkedid = isset($data['linkedid']) && is_string($data['linkedid']) ? $data['linkedid'] : null;
         $search = isset($data['search']) && is_string($data['search']) ? $data['search'] : null;
 
-        // Normalize date filters to include time
-        // WHY: Database field 'start' contains timestamp, but users provide date-only values
-        // Example: '2025-10-13' should match records from '2025-10-13 00:00:00' to '2025-10-13 23:59:59'
-        if ($dateFrom !== null && strlen($dateFrom) === 10) {
-            // Date-only format (YYYY-MM-DD), add start of day
-            $dateFrom .= ' 00:00:00';
-        }
-        if ($dateTo !== null && strlen($dateTo) === 10) {
-            // Date-only format (YYYY-MM-DD), add end of day
-            $dateTo .= ' 23:59:59';
-        }
+        // Period bounds in PBX wall-clock time: start >= dateFrom AND start < dateTo
+        // WHY: 'start' keeps milliseconds, so "<= 23:59:59" lost calls of the last second
+        $periodStart = $dateFrom === null ? null : CdrDateRange::start($dateFrom);
+        $periodEnd = $dateTo === null ? null : CdrDateRange::endExclusive($dateTo);
 
         // Enforce date range limits to prevent excessive queries
         // WHY: Prevent DoS attacks via unlimited date ranges (e.g., dateFrom=2000-01-01&dateTo=2030-12-31)
         $maxDaysRange = 365; // Maximum 1 year range
-        if ($dateFrom !== null && $dateTo !== null) {
-            try {
-                $dateFromObj = new \DateTime($dateFrom);
-                $dateToObj = new \DateTime($dateTo);
-                $daysDiff = $dateFromObj->diff($dateToObj)->days;
-
-                if ($daysDiff > $maxDaysRange) {
-                    // WHY: Throw InvalidArgumentException to return 422 validation error
-                    throw new \InvalidArgumentException(
-                        "Date range exceeds maximum allowed ({$maxDaysRange} days). " .
-                        "Please narrow your search criteria."
-                    );
-                }
-            } catch (\Exception $e) {
-                if ($e instanceof \InvalidArgumentException) {
-                    throw $e; // Re-throw validation errors
-                }
-                // Invalid date format - throw as validation error
-                throw new \InvalidArgumentException(
-                    "Invalid date format. Expected: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS"
-                );
-            }
+        if ($periodStart !== null && $periodEnd !== null && $periodStart >= $periodEnd) {
+            throw new \InvalidArgumentException('dateFrom must be before dateTo.');
         }
+        if (
+            $periodStart !== null && $periodEnd !== null
+            && CdrDateRange::days($periodStart, $periodEnd) > $maxDaysRange
+        ) {
+            // WHY: Throw InvalidArgumentException to return 422 validation error
+            throw new \InvalidArgumentException(
+                "Date range exceeds maximum allowed ({$maxDaysRange} days). " .
+                "Please narrow your search criteria."
+            );
+        }
+        $dateFrom = $periodStart === null ? null : CdrDateRange::toSql($periodStart);
+        $dateTo = $periodEnd === null ? null : CdrDateRange::toSql($periodEnd);
 
         // Auto-apply date range if no filters specified
         // WHY: Prevent full table scans on massive datasets
         if ($dateFrom === null && $dateTo === null && $linkedid === null &&
             $srcNum === null && $dstNum === null && $search === null && $did === null) {
-            // Default to last 30 days if no filters provided
-            $dateTo = date('Y-m-d 23:59:59');
-            $dateFrom = date('Y-m-d 00:00:00', strtotime('-30 days'));
+            // Default to the last 30 days if no filters provided
+            $dateTo = CdrDateRange::toSql(CdrDateRange::endExclusive(date('Y-m-d')));
+            $dateFrom = CdrDateRange::toSql(CdrDateRange::start(date('Y-m-d', strtotime('-30 days'))));
         }
 
         // Sorting parameters with SQL injection protection
@@ -258,7 +244,7 @@ class GetListAction
         }
 
         if ($dateTo !== null) {
-            $conditions[] = 'start <= :dateTo:';
+            $conditions[] = 'start < :dateTo:';
             $bind['dateTo'] = $dateTo;
         }
 

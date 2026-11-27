@@ -11,7 +11,8 @@ what the code does not tell you.
   `Modules/<ModuleUniqueId>/<Controller>/<action>` (`BaseController::initialize()`).
 - Menu entries live in `Library/Elements.php`; `'param' => '#reset-cache'` on an entry makes
   the page's JS clear its `sessionStorage` filter state on the next load (pattern in
-  `Extensions/extensions-index.js`, `CallDetailRecords/call-detail-records-index.js`).
+  `Extensions/extensions-index.js`). Call history deliberately has no reset: its menu item is
+  used to refresh the list and keeps the saved filters.
 - No per-page permission registration: `SecurityPlugin` checks controller+action against
   `AclProvider` role rules.
 

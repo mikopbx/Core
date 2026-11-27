@@ -25,6 +25,9 @@ in the root `AGENTS.md`; BrowserStack setup in `BROWSERSTACK_SETUP.md`, JUnit up
   no ARM64 Linux binary for the container), then export `BROWSERSTACK_DAEMON_STARTED=true`,
   `BROWSERSTACK_LOCAL=true`, `BROWSERSTACK_LOCAL_IDENTIFIER=local_test`. Only the literal string
   `false` makes the test start its own tunnel from PHP.
+- `BROWSERSTACK_TIMEZONE` (optional) sets the `browserstack.timezone` capability, a zone name from
+  the BrowserStack list; the `CallDetailRecords` suite is meant to run with a zone whose date
+  differs from the PBX one.
 - GUI credentials are hardcoded in `Tests/Traits/LoginTrait.php` (`admin` / `123456789MikoPBX#1`);
   the target PBX must match or the first `ChangeWeakPasswordTest` run must set them.
 

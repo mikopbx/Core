@@ -363,7 +363,7 @@ return [
     // CDR specific parameters
     'rest_param_cdr_id' => 'Numerieke post-ID (bijv. 718517) of linkedid om het hele gesprek te verwijderen (bijv. mikopbx-1760784793.4627)',
     'rest_param_cdr_limit' => 'Maximaal aantal op te halen CDR-records (standaard 50, maximaal 1000)',
-    'rest_param_cdr_dateTo' => 'Einddatum van de CDR-bemonsteringsperiode',
+    'rest_param_cdr_dateTo' => 'Einde van de periode van CDR-records, inclusief (de hele opgegeven dag of de hele opgegeven seconde), in lokale PBX-tijd zonder tijdzone: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS of YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_search' => 'Slim zoeken op CDR en extensies. Ondersteunt prefixen voor nauwkeurig zoeken: src:number (bron), dst:number (bestemming), did:number (inkomende DID). Zonder prefix kunt u zoeken op alle velden, inclusief namen van medewerkers en mobiele nummers.',
     'rest_param_cdr_linkedid' => 'Filter: Exacte zoekopdracht op linkedid (om alle records van één gesprek op te halen)',
     'rest_param_cdr_provider' => 'Provider-identificatie voor filtering (bijv. SIP-TRUNK-xxx)',
@@ -1296,7 +1296,7 @@ return [
     'rest_ms_RefreshToken' => 'OAuth2-token vernieuwen',
     'rest_param_ir_note' => 'Opmerking of beschrijving van de inkomende route',
     'rest_param_cq_announce_hold_time' => 'Wachttijd aankondigen',
-    'rest_param_cdr_dateFrom' => 'Begindatum van de CDR-bemonsteringsperiode',
+    'rest_param_cdr_dateFrom' => 'Begin van de periode van CDR-records, inclusief, in lokale PBX-tijd zonder tijdzone: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS of YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_src_num' => 'Filter: bellernummer (bronnummer)',
     'rest_param_cdr_dst_num' => 'Filter: bestemmingsnummer',
     'rest_param_cdr_did' => 'Filter: binnenkomend DID-nummer',

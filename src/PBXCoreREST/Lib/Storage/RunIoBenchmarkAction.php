@@ -24,6 +24,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\ServerTimeMeta;
 
 /**
  * Run Storage I/O Benchmark
@@ -145,10 +146,7 @@ class RunIoBenchmarkAction
                 'blockSize' => self::BLOCK_SIZE,
                 'measuredAt' => time(),
                 'tool' => 'dd',
-                '_meta' => [
-                    'server_timezone' => date_default_timezone_get(),
-                    'server_timezone_offset' => (new \DateTime())->getOffset(),
-                ],
+                '_meta' => ServerTimeMeta::build(),
             ];
             @file_put_contents($cacheFile, json_encode($result, JSON_UNESCAPED_SLASHES));
 

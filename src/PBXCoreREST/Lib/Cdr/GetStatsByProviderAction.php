@@ -58,8 +58,8 @@ class GetStatsByProviderAction
 
         try {
             // Validate required date parameters
-            $dateFrom = isset($data['dateFrom']) && is_string($data['dateFrom']) ? $data['dateFrom'] : null;
-            $dateTo = isset($data['dateTo']) && is_string($data['dateTo']) ? $data['dateTo'] : null;
+            $dateFrom = CdrDateRange::readParameter($data['dateFrom'] ?? null);
+            $dateTo = CdrDateRange::readParameter($data['dateTo'] ?? null);
 
             if ($dateFrom === null || $dateTo === null) {
                 throw new \InvalidArgumentException(
@@ -67,39 +67,21 @@ class GetStatsByProviderAction
                 );
             }
 
-            // Normalize date-only values to include time
-            if (strlen($dateFrom) === 10) {
-                $dateFrom .= ' 00:00:00';
-            }
-            if (strlen($dateTo) === 10) {
-                $dateTo .= ' 23:59:59';
-            }
-
-            // Validate date range (max 365 days)
-            try {
-                $dateFromObj = new \DateTime($dateFrom);
-                $dateToObj = new \DateTime($dateTo);
-                $daysDiff = $dateFromObj->diff($dateToObj)->days;
-
-                if ($dateFromObj > $dateToObj) {
-                    throw new \InvalidArgumentException(
-                        'dateFrom must be before dateTo.'
-                    );
-                }
-
-                if ($daysDiff > 365) {
-                    throw new \InvalidArgumentException(
-                        'Date range exceeds maximum allowed (365 days). Please narrow your search criteria.'
-                    );
-                }
-            } catch (\Exception $e) {
-                if ($e instanceof \InvalidArgumentException) {
-                    throw $e;
-                }
+            // Period bounds in PBX wall-clock time: start >= dateFrom AND start < dateTo
+            $periodStart = CdrDateRange::start($dateFrom);
+            $periodEnd = CdrDateRange::endExclusive($dateTo);
+            if ($periodStart >= $periodEnd) {
                 throw new \InvalidArgumentException(
-                    'Invalid date format. Expected: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS'
+                    'dateFrom must be before dateTo.'
                 );
             }
+            if (CdrDateRange::days($periodStart, $periodEnd) > 365) {
+                throw new \InvalidArgumentException(
+                    'Date range exceeds maximum allowed (365 days). Please narrow your search criteria.'
+                );
+            }
+            $dateFrom = CdrDateRange::toSql($periodStart);
+            $dateTo = CdrDateRange::toSql($periodEnd);
 
             // Optional provider filter
             $provider = isset($data['provider']) && is_string($data['provider']) ? $data['provider'] : null;
@@ -212,7 +194,7 @@ class GetStatsByProviderAction
                     MAX(billsec) as billsec
                 FROM cdr_general
                 WHERE start >= ?
-                  AND start <= ?
+                  AND start < ?
                   AND {$accountColumn} IN ({$placeholders})
                 GROUP BY {$accountColumn}, linkedid
             )

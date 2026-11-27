@@ -256,18 +256,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'dateFrom' => [
                 'type' => 'string',
                 'description' => 'rest_param_cdr_dateFrom',
-                'format' => 'date-time',
                 'sanitize' => 'string',
                 'in' => 'query',
-                'example' => '2025-01-01T00:00:00'
+                'example' => '2025-01-01'
             ],
             'dateTo' => [
                 'type' => 'string',
                 'description' => 'rest_param_cdr_dateTo',
-                'format' => 'date-time',
                 'sanitize' => 'string',
                 'in' => 'query',
-                'example' => '2025-01-31T23:59:59'
+                'example' => '2025-01-31'
             ],
 
             // ========== SEARCH FILTERS ==========

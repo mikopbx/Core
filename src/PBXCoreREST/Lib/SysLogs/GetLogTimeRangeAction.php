@@ -24,6 +24,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
+use MikoPBX\PBXCoreREST\Lib\Common\ServerTimeMeta;
 
 /**
  * Gets the available time range for a log file
@@ -112,8 +113,8 @@ class GetLogTimeRangeAction extends Injectable
                 'end_formatted' => $timeRange['end_formatted'],
             ],
             'total_lines' => $timeRange['total_lines'],
-            'server_timezone' => date_default_timezone_get(), // IANA name, e.g. "Europe/Moscow"
-            'server_timezone_offset' => (new \DateTime())->getOffset(), // Server timezone offset in seconds
+            // server_timezone (IANA name) and server_timezone_offset (seconds) at the top level
+            ...ServerTimeMeta::build(),
         ];
 
         return $res;

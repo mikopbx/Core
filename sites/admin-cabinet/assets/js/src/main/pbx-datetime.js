@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global Intl */
+/* global Intl, moment */
 
 /**
  * Global date/time formatter that renders timestamps in the PBX server
@@ -25,13 +25,21 @@
  * Backend endpoints place TZ metadata under `data._meta`:
  *   { server_timezone: 'Europe/Moscow', server_timezone_offset: 10800 }
  * The numeric offset (seconds) is kept as a fallback for callers that
- * pre-date the IANA-name field.
+ * pre-date the IANA-name field. Uncached responses may add
+ * `server_now: 'YYYY-MM-DD HH:mm:ss'`, the PBX wall-clock time.
  *
  * @module PbxDateTime
  */
 const PbxDateTime = {
     serverTimezone: null,
     serverTimezoneOffset: 0,
+
+    /**
+     * PBX wall-clock time from the last `server_now` and the browser time it arrived at.
+     * @type {string|null}
+     */
+    serverNow: null,
+    serverNowReceivedAt: 0,
 
     /**
      * Store server timezone metadata published in API responses.
@@ -52,6 +60,51 @@ const PbxDateTime = {
         if (typeof meta.server_timezone_offset === 'number') {
             PbxDateTime.serverTimezoneOffset = meta.server_timezone_offset;
         }
+        if (typeof meta.server_now === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(meta.server_now)) {
+            PbxDateTime.serverNow = meta.server_now;
+            PbxDateTime.serverNowReceivedAt = Date.now();
+        }
+    },
+
+    /**
+     * Current PBX wall-clock time as a moment, for calendar-day logic such as "today" in
+     * date pickers. Its date and time fields carry the PBX time; the instant it represents
+     * in the browser timezone is meaningless.
+     *
+     * Prefers `server_now` (independent of a wrong browser clock), then the server timezone
+     * (date only: some browsers print midnight as hour 24), then the browser time.
+     * Requires moment on the page.
+     *
+     * @returns {moment.Moment}
+     */
+    serverNowMoment() {
+        if (PbxDateTime.serverNow) {
+            const now = moment(PbxDateTime.serverNow, 'YYYY-MM-DD HH:mm:ss', true);
+            if (now.isValid()) {
+                return now.add(Date.now() - PbxDateTime.serverNowReceivedAt, 'ms');
+            }
+        }
+        if (PbxDateTime.hasServerTimezone() && typeof Intl !== 'undefined') {
+            try {
+                const parts = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: PbxDateTime.serverTimezone,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                }).formatToParts(new Date());
+                const lookup = {};
+                parts.forEach((p) => {
+                    lookup[p.type] = p.value;
+                });
+                const today = moment(`${lookup.year}-${lookup.month}-${lookup.day}`, 'YYYY-MM-DD', true);
+                if (today.isValid()) {
+                    return today;
+                }
+            } catch (e) {
+                // Fall through to the browser time
+            }
+        }
+        return moment();
     },
 
     /**

@@ -469,7 +469,7 @@ return [
     'rest_param_pvd_to' => '历史数据抽样结束日期/时间',
     'rest_syslog_PrepareArchive' => '准备日志存档',
     'rest_syslog_PrepareArchiveDesc' => '准备所有系统日志的存档以供下载（无需停止数据包捕获）',
-    'rest_param_cdr_dateTo' => 'CDR采样期结束日期',
+    'rest_param_cdr_dateTo' => 'CDR 记录时间段的结束（含，即所指定的整天或整秒），使用不带时区的 PBX 本地时间：YYYY-MM-DD, YYYY-MM-DD HH:MM:SS 或 YYYY-MM-DDTHH:MM:SS',
     'rest_param_auth_clientIp' => '客户端 IP 地址',
     'rest_schema_pwd_includeLowercase' => '密码中必须包含小写字母。',
     'rest_schema_cq_redirect_to_extension_if_empty_represent' => '空队列插件的 HTML 表示',
@@ -1192,7 +1192,7 @@ return [
     // CDR specific parameters
     'rest_param_cdr_id' => '使用数字帖子 ID（例如 718517）或链接 ID 删除整个对话（例如 mikopbx-1760784793.4627）',
     'rest_param_cdr_offset' => 'CDR记录分页偏移量（默认值为0）',
-    'rest_param_cdr_dateFrom' => 'CDR采样期的开始日期',
+    'rest_param_cdr_dateFrom' => 'CDR 记录时间段的开始（含），使用不带时区的 PBX 本地时间：YYYY-MM-DD, YYYY-MM-DD HH:MM:SS 或 YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_dst_num' => '筛选条件：目的地号码',
     'rest_param_cdr_did' => '筛选条件：传入的DID号码',
     'rest_param_cdr_disposition' => '筛选条件：通话结束状态',

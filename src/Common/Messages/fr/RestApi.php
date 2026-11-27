@@ -531,7 +531,7 @@ return [
     'rest_param_ir_priorities' => 'Un tableau d\'objets contenant des identifiants d\'itinéraire et de nouvelles valeurs de priorité',
     // CallQueues specific parameters
     'rest_param_cq_name' => 'Afficher le nom de la file d\'attente',
-    'rest_param_cdr_dateFrom' => 'Date de début de la période d\'échantillonnage des CDR',
+    'rest_param_cdr_dateFrom' => 'Début de la période des enregistrements CDR, inclus, en heure locale du PBX sans fuseau horaire : YYYY-MM-DD, YYYY-MM-DD HH:MM:SS ou YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_token' => 'Un jeton d\'accès temporaire pour lire l\'enregistrement de l\'appel (de préférence pour le visionner)',
     'rest_param_cdr_view' => 'Chemin d\'accès au fichier d\'enregistrement de l\'appel (obsolète, utilisez un jeton)',
     'rest_param_auth_rememberMe' => 'Mémoriser l\'appareil (validité prolongée du jeton d\'actualisation)',
@@ -609,7 +609,7 @@ return [
     'rest_param_ivr_actions' => 'Tableau des actions pour les touches pressées',
     // CDR specific parameters
     'rest_param_cdr_id' => 'Identifiant numérique du message (par exemple 718517) ou identifiant LinkedIn pour supprimer la conversation entière (par exemple mikopbx-1760784793.4627)',
-    'rest_param_cdr_dateTo' => 'Date de fin de la période d\'échantillonnage des CDR',
+    'rest_param_cdr_dateTo' => 'Fin de la période des enregistrements CDR, incluse (toute la journée indiquée ou toute la seconde indiquée), en heure locale du PBX sans fuseau horaire : YYYY-MM-DD, YYYY-MM-DD HH:MM:SS ou YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_search' => 'Recherche intelligente par CDR et extensions. Prise en charge des préfixes pour une recherche précise : src:numéro (source), dst:numéro (destination), did:numéro (numéro DID entrant). Sans préfixe, la recherche s’effectue sur tous les champs, y compris les noms des employés et les numéros de téléphone mobile.',
     'rest_param_cdr_disposition' => 'Filtre : État de fin d’appel',
     'rest_param_cdr_linkedid' => 'Filtre : Recherche exacte par linkedid (pour récupérer tous les enregistrements d’un seul appel)',

@@ -1037,8 +1037,8 @@ return [
     // CDR specific parameters
     'rest_param_cdr_id' => 'Číselné ID příspěvku (např. 718517) nebo linkedid pro smazání celé konverzace (např. mikopbx-1760784793.4627)',
     'rest_param_cdr_limit' => 'Maximální počet záznamů CDR k načtení (výchozí 50, maximálně 1000)',
-    'rest_param_cdr_dateFrom' => 'Datum zahájení vzorkovacího období CDR',
-    'rest_param_cdr_dateTo' => 'Datum ukončení vzorkovacího období CDR',
+    'rest_param_cdr_dateFrom' => 'Začátek období záznamů CDR včetně, v místním čase PBX bez časového pásma: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS nebo YYYY-MM-DDTHH:MM:SS',
+    'rest_param_cdr_dateTo' => 'Konec období záznamů CDR včetně (celý zadaný den nebo celá zadaná sekunda), v místním čase PBX bez časového pásma: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS nebo YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_dst_num' => 'Filtr: číslo cíle',
     'rest_param_cdr_did' => 'Filtr: příchozí DID číslo',
     'rest_schema_cdr_id' => 'Jedinečný identifikátor záznamu CDR',

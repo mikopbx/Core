@@ -111,7 +111,8 @@ class Elements extends Injectable
                         'caption' => 'mm_CallDetailRecords',
                         'iconclass' => 'list ul',
                         'action' => 'index',
-                        'param' => '#reset-cache',
+                        // No #reset-cache: the menu item refreshes the call history with the saved filters
+                        'param' => '',
                         'style' => '',
                     ],
                 ],

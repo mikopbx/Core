@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, ExtensionsAPI, moment, globalTranslate, CDRPlayer, CdrAPI, UserMessage, ACLHelper, SecurityUtils */
+/* global globalRootUrl, SemanticLocalization, ExtensionsAPI, moment, globalTranslate, CDRPlayer, CdrAPI, UserMessage, ACLHelper, SecurityUtils, PbxDateTime */
 
 /**
  * callDetailRecords module.
@@ -92,6 +92,26 @@ const callDetailRecords = {
     isInitialized: false,
 
     /**
+     * Preset periods of the date picker built from the PBX "today", keyed by a stable id
+     * @type {Object<string, {label: string, range: moment.Moment[]}>}
+     */
+    datePresets: {},
+
+    /**
+     * Source of the shown period: a preset id, RECENT_PERIOD_KEY or null for custom dates
+     * WHY: Saved with the filter state so that "Today" means the current PBX day after a reload,
+     * not the day it was chosen on, and the default period follows new calls
+     * @type {string|null}
+     */
+    activePresetKey: null,
+
+    /**
+     * Period source of the default range: the days of the last records
+     * @type {string}
+     */
+    RECENT_PERIOD_KEY: 'recent',
+
+    /**
      * Initializes the call detail records.
      */
     initialize() {
@@ -102,20 +122,6 @@ const callDetailRecords = {
         callDetailRecords.$pageLengthSelector = $('#page-length-select');
         callDetailRecords.$emptyDatabasePlaceholder = $('#cdr-empty-database-placeholder');
 
-        // Listen for hash changes (when user clicks menu link while already on page)
-        // WHY: Browser doesn't reload page on hash-only URL changes
-        $(`a[href='${globalRootUrl}call-detail-records/index/#reset-cache']`).on('click', function(e) {
-            e.preventDefault();
-             // Remove hash from URL without page reload
-             history.replaceState(null, null, window.location.pathname);
-            
-             callDetailRecords.clearFiltersState();
-             // Also clear page length preference
-             localStorage.removeItem('cdrTablePageLength');
-             // Reload page to apply reset
-             window.location.reload();
-        });
-
         // Fetch metadata first, then initialize DataTable with proper date range
         // WHY: Prevents double request on page load
         callDetailRecords.fetchLatestCDRDate();
@@ -123,7 +129,7 @@ const callDetailRecords = {
 
     /**
      * Save current filter state to sessionStorage
-     * Stores date range, search text, current page, and page length
+     * Stores date range with its preset, search text and current page
      */
     saveFiltersState() {
         try {
@@ -136,9 +142,9 @@ const callDetailRecords = {
             const state = {
                 dateFrom: null,
                 dateTo: null,
+                presetKey: callDetailRecords.activePresetKey,
                 searchText: '',
                 currentPage: 0,
-                pageLength: callDetailRecords.getPageLength()
             };
 
             // Get dates from daterangepicker instance
@@ -218,12 +224,24 @@ const callDetailRecords = {
         // Initialize debounce timer variable
         let searchDebounceTimer = null;
 
+        // The clear button of the search input fires "search", not keyup
+        callDetailRecords.$globalSearch.on('search', () => {
+            if (callDetailRecords.$globalSearch.val() === '') {
+                clearTimeout(searchDebounceTimer);
+                callDetailRecords.applyFilter('');
+            }
+        });
+
         callDetailRecords.$globalSearch.on('keyup', (e) => {
             // Clear previous timer if the user is still typing
             clearTimeout(searchDebounceTimer);
 
             // Set a new timer for delayed execution
             searchDebounceTimer = setTimeout(() => {
+                // An emptied field is already applied by the "search" event where browsers fire it
+                if (callDetailRecords.$globalSearch.val() === '' && callDetailRecords.dataTable.search() === '') {
+                    return;
+                }
                 if (e.keyCode === 13
                     || e.keyCode === 8
                     || callDetailRecords.$globalSearch.val().length === 0) {
@@ -274,8 +292,9 @@ const callDetailRecords = {
                         const endDate = dateRangePicker.endDate;
 
                         if (startDate && startDate.isValid() && endDate && endDate.isValid()) {
+                            // Calendar days of the PBX; the server includes the whole last day
                             params.dateFrom = startDate.format('YYYY-MM-DD');
-                            params.dateTo = endDate.endOf('day').format('YYYY-MM-DD HH:mm:ss');
+                            params.dateTo = endDate.format('YYYY-MM-DD');
                         }
                     }
 
@@ -626,21 +645,16 @@ const callDetailRecords = {
         const savedState = callDetailRecords.loadFiltersState();
 
         CdrAPI.getMetadata({ limit: 100 }, (data) => {
+            if (data && data._meta) {
+                PbxDateTime.setServerMeta(data._meta);
+            }
             if (data && data.hasRecords) {
-                let startDate, endDate;
-
-                // If we have saved state with dates, use those instead of metadata
-                if (savedState && savedState.dateFrom && savedState.dateTo) {
-                    startDate = moment(savedState.dateFrom);
-                    endDate = moment(savedState.dateTo);
-                } else {
-                    // Convert metadata date strings to moment objects
-                    startDate = moment(data.earliestDate);
-                    endDate = moment(data.latestDate);
-                }
+                const today = PbxDateTime.serverNowMoment();
+                callDetailRecords.datePresets = callDetailRecords.buildDatePresets(today);
+                const [startDate, endDate] = callDetailRecords.getInitialPeriod(savedState, data, today);
 
                 callDetailRecords.hasCDRRecords = true;
-                callDetailRecords.initializeDateRangeSelector(startDate, endDate);
+                callDetailRecords.initializeDateRangeSelector(startDate, endDate, today);
 
                 // Initialize DataTable only if we have records
                 // WHY: DataTable needs date range to be set first
@@ -869,25 +883,87 @@ const callDetailRecords = {
         return Math.max(Math.floor((windowHeight - overhead) / rowHeight), 5);
     },
     /**
-     * Initializes the date range selector.
-     * @param {moment} startDate - Optional earliest record date from last 100 records
-     * @param {moment} endDate - Optional latest record date from last 100 records
+     * Builds the preset periods of the date picker.
+     * @param {moment.Moment} today - Current PBX time (wall clock)
+     * @returns {Object<string, {label: string, range: moment.Moment[]}>}
      */
-    initializeDateRangeSelector(startDate = null, endDate = null) {
+    buildDatePresets(today) {
+        const day = () => today.clone();
+        return {
+            today: { label: globalTranslate.cal_Today, range: [day(), day()] },
+            yesterday: {
+                label: globalTranslate.cal_Yesterday,
+                range: [day().subtract(1, 'days'), day().subtract(1, 'days')],
+            },
+            lastWeek: { label: globalTranslate.cal_LastWeek, range: [day().subtract(6, 'days'), day()] },
+            last30Days: { label: globalTranslate.cal_Last30Days, range: [day().subtract(29, 'days'), day()] },
+            thisMonth: { label: globalTranslate.cal_ThisMonth, range: [day().startOf('month'), day().endOf('month')] },
+            lastMonth: {
+                label: globalTranslate.cal_LastMonth,
+                range: [day().subtract(1, 'month').startOf('month'), day().subtract(1, 'month').endOf('month')],
+            },
+        };
+    },
+
+    /**
+     * Chooses the period shown on load: the saved preset recalculated for today, the saved dates,
+     * or the dates of the last records (also when they were the saved source, so that new calls
+     * show up). Both ends are limited to the PBX today
+     * WHY: the picker limits only the end, and a start in the future gives an empty list
+     * that the saved state would keep after every reload
+     * @param {Object|null} savedState - Filter state from sessionStorage
+     * @param {Object} metadata - getMetadata response data
+     * @param {moment.Moment} today - Current PBX time (wall clock)
+     * @returns {moment.Moment[]} Start and end dates
+     */
+    getInitialPeriod(savedState, metadata, today) {
+        const lastDay = today.clone().endOf('day');
+        const limit = (range) => range.map((date) => moment.min(date.clone(), lastDay));
+        const candidates = [];
+        callDetailRecords.activePresetKey = null;
+
+        const preset = savedState && callDetailRecords.datePresets[savedState.presetKey];
+        if (preset) {
+            candidates.push({ range: preset.range, presetKey: savedState.presetKey });
+        } else if (savedState && savedState.presetKey !== callDetailRecords.RECENT_PERIOD_KEY
+            && savedState.dateFrom && savedState.dateTo) {
+            candidates.push({
+                range: [moment(savedState.dateFrom, 'YYYY-MM-DD', true), moment(savedState.dateTo, 'YYYY-MM-DD', true)],
+                presetKey: null,
+            });
+        }
+        candidates.push({
+            range: [moment(metadata.earliestDate), moment(metadata.latestDate)],
+            presetKey: callDetailRecords.RECENT_PERIOD_KEY,
+        });
+
+        for (const candidate of candidates) {
+            const [start, end] = candidate.range;
+            if (start.isValid() && end.isValid() && !start.isAfter(end, 'day')) {
+                callDetailRecords.activePresetKey = candidate.presetKey;
+                return limit(candidate.range);
+            }
+        }
+        return [today.clone(), today.clone()];
+    },
+
+    /**
+     * Initializes the date range selector.
+     * @param {moment.Moment} startDate - First day of the shown period
+     * @param {moment.Moment} endDate - Last day of the shown period
+     * @param {moment.Moment} today - Current PBX time (wall clock): presets and the latest selectable day
+     */
+    initializeDateRangeSelector(startDate, endDate, today) {
         const options = {};
 
-        options.ranges = {
-            [globalTranslate.cal_Today]: [moment(), moment()],
-            [globalTranslate.cal_Yesterday]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            [globalTranslate.cal_LastWeek]: [moment().subtract(6, 'days'), moment()],
-            [globalTranslate.cal_Last30Days]: [moment().subtract(29, 'days'), moment()],
-            [globalTranslate.cal_ThisMonth]: [moment().startOf('month'), moment().endOf('month')],
-            [globalTranslate.cal_LastMonth]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-        };
+        options.ranges = {};
+        Object.values(callDetailRecords.datePresets).forEach((preset) => {
+            options.ranges[preset.label] = preset.range.map((date) => date.clone());
+        });
         options.alwaysShowCalendars = true;
         options.autoUpdateInput = true;
         options.linkedCalendars = true;
-        options.maxDate = moment();
+        options.maxDate = today.clone().endOf('day');
         options.locale = {
             format: 'DD/MM/YYYY',
             separator: ' - ',
@@ -901,16 +977,8 @@ const callDetailRecords = {
             firstDay: 1,
         };
 
-        // If we have date range from last 100 records, use it
-        // WHY: Provides meaningful context - user sees period covering recent calls
-        if (startDate && endDate) {
-            options.startDate = moment(startDate).startOf('day');
-            options.endDate = moment(endDate).endOf('day');
-        } else {
-            // Fallback to today if no records
-            options.startDate = moment();
-            options.endDate = moment();
-        }
+        options.startDate = startDate.clone().startOf('day');
+        options.endDate = endDate.clone().endOf('day');
 
         callDetailRecords.$dateRangeSelector.daterangepicker(
             options,
@@ -929,6 +997,8 @@ const callDetailRecords = {
      * @param {string} label - The label.
      */
     cbDateRangeSelectorOnSelect(start, end, label) {
+        callDetailRecords.activePresetKey = Object.keys(callDetailRecords.datePresets)
+            .find((key) => callDetailRecords.datePresets[key].label === label) || null;
         // Only pass search keyword, dates are read directly from date range selector
         callDetailRecords.applyFilter(callDetailRecords.$globalSearch.val());
         // State will be saved automatically in draw event after filter is applied

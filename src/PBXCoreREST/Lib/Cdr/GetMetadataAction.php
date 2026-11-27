@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\ServerTimeMeta;
 use Phalcon\Di\Di;
 
 /**
@@ -43,6 +44,7 @@ class GetMetadataAction
      * - earliestDate: Start date from the last N records
      * - latestDate: End date from the last N records
      * - hasRecords: Whether database has any CDR records
+     * - _meta: server_timezone, server_timezone_offset and server_now (PBX wall-clock time)
      *
      * @param array<string, mixed> $data Request parameters (limit for sample size)
      * @return PBXApiResult
@@ -82,7 +84,9 @@ class GetMetadataAction
                     'earliestDate' => $result[0]['earliestDate'],
                     'latestDate' => $result[0]['latestDate'],
                     'hasRecords' => true,
-                    'sampleSize' => (int)$result[0]['recordCount']
+                    'sampleSize' => (int)$result[0]['recordCount'],
+                    // PBX "now" for the date picker: "today" is the PBX day, not the browser one
+                    '_meta' => ServerTimeMeta::buildWithNow(),
                 ];
             } else {
                 // Empty database
@@ -90,7 +94,8 @@ class GetMetadataAction
                     'earliestDate' => null,
                     'latestDate' => null,
                     'hasRecords' => false,
-                    'sampleSize' => 0
+                    'sampleSize' => 0,
+                    '_meta' => ServerTimeMeta::buildWithNow(),
                 ];
             }
 

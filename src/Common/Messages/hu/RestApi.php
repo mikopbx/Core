@@ -163,7 +163,7 @@ return [
     'rest_param_ts_ntp_server' => 'NTP szerver cím az időszinkronizáláshoz',
     'rest_param_cq_caller_hear' => 'Mit hall a hívó fél várakozás közben?',
     'rest_param_cdr_offset' => 'CDR-rekordok oldalszámozásának eltolása (alapértelmezett: 0)',
-    'rest_param_cdr_dateTo' => 'A CDR mintavételi időszak végdátuma',
+    'rest_param_cdr_dateTo' => 'A CDR rekordok időszakának vége (beleértve a teljes megadott napot vagy a teljes megadott másodpercet), a PBX helyi idejében, időzóna nélkül: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS vagy YYYY-MM-DDTHH:MM:SS',
     'rest_param_cdr_did' => 'Szűrő: bejövő DID szám',
     'rest_param_cdr_disposition' => 'Szűrő: Hívás befejezési állapota',
     'rest_param_cdr_filename' => 'Letöltéshez használt fájlnév',
@@ -467,7 +467,7 @@ return [
     'rest_param_ivr_allow_enter_any_internal_extension' => 'Bármely belső mellék tárcsázásának engedélyezése',
     // CDR specific parameters
     'rest_param_cdr_id' => 'Numerikus bejegyzésazonosító (pl. 718517) vagy linkedid a teljes beszélgetés törléséhez (pl. mikopbx-1760784793.4627)',
-    'rest_param_cdr_dateFrom' => 'A CDR mintavételi időszak kezdő dátuma',
+    'rest_param_cdr_dateFrom' => 'A CDR rekordok időszakának kezdete (beleértve), a PBX helyi idejében, időzóna nélkül: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS vagy YYYY-MM-DDTHH:MM:SS',
     'rest_schema_ak_allowed_paths_permissions' => 'Egy objektum, amely hozzáférési jogokkal rendelkezik API végpontokhoz. A kulcsok API elérési utak, az értékek pedig „olvashatók” vagy „írhatók” (olvasás és írás).',
     'rest_schema_ak_created_at' => 'A kulcs létrehozásának dátuma és időpontja',
     'rest_schema_ak_last_used_at' => 'A kulcs utolsó használatának dátuma és időpontja',
