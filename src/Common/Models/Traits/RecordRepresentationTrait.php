@@ -37,6 +37,7 @@ use MikoPBX\AdminCabinet\Controllers\OffWorkTimesController;
 use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
+use MikoPBX\Common\Library\OutWorkTimeDate;
 use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
@@ -252,11 +253,11 @@ trait RecordRepresentationTrait
                     $represent = '';
                     if (!empty($this->date_from)) {
                         $represent .= "<i class='icon outline calendar alternate' ></i>";
-                        $tsFrom = is_numeric($this->date_from) ? (int)$this->date_from : (int)strtotime($this->date_from);
-                        $date_from = date("d.m.Y", $tsFrom);
+                        $date_from = OutWorkTimeDate::format((string)$this->date_from, 'd.m.Y');
                         $represent .= "$date_from";
-                        $tsTo = $this->date_to ? (is_numeric($this->date_to) ? (int)$this->date_to : (int)strtotime($this->date_to)) : $tsFrom;
-                        $date_to = date("d.m.Y", $tsTo);
+                        $date_to = empty($this->date_to)
+                            ? $date_from
+                            : OutWorkTimeDate::format((string)$this->date_to, 'd.m.Y');
                         if ($date_from !== $date_to) {
                             $represent .= " - $date_to";
                         }

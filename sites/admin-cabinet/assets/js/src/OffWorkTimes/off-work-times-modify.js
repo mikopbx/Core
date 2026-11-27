@@ -472,10 +472,10 @@ const outOfWorkTimeRecord = {
                 
                 // Set dates if present
                 if (data.date_from) {
-                    outOfWorkTimeRecord.setDateFromTimestamp(data.date_from, '#range-days-start');
+                    outOfWorkTimeRecord.setDateFromValue(data.date_from, '#range-days-start');
                 }
                 if (data.date_to) {
-                    outOfWorkTimeRecord.setDateFromTimestamp(data.date_to, '#range-days-end');
+                    outOfWorkTimeRecord.setDateFromValue(data.date_to, '#range-days-end');
                 }
                 
                 // Update field visibility based on action
@@ -990,39 +990,34 @@ const outOfWorkTimeRecord = {
     },
     
     /**
-     * Helper to set date from timestamp or date string
-     * @param {string|number} dateValue - Unix timestamp or date string (YYYY-MM-DD)
+     * Put a stored date into a calendar.
+     * Dates are calendar days of the PBX timezone ('YYYY-MM-DD'); they are built from
+     * local components because new Date('YYYY-MM-DD') parses as UTC midnight and shows
+     * the previous day in browsers west of UTC.
+     * @param {string} dateValue - Date in YYYY-MM-DD format
      * @param {string} selector - jQuery selector
      */
-    setDateFromTimestamp(dateValue, selector) {
-        if (!dateValue) return;
-        
-        // Check if it's a date string in YYYY-MM-DD format first
-        if (typeof dateValue === 'string') {
-            // Check for date format YYYY-MM-DD
-            if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-                const date = new Date(dateValue);
-                if (!isNaN(date.getTime())) {
-                    $(selector).calendar('set date', date);
-                    return;
-                }
-            }
-            
-            // Try to parse as Unix timestamp (all digits)
-            if (/^\d+$/.test(dateValue)) {
-                const timestamp = parseInt(dateValue);
-                if (timestamp > 0) {
-                    // Convert Unix timestamp to Date
-                    $(selector).calendar('set date', new Date(timestamp * 1000));
-                    return;
-                }
-            }
-        } else if (typeof dateValue === 'number' && dateValue > 0) {
-            // Numeric Unix timestamp
-            $(selector).calendar('set date', new Date(dateValue * 1000));
+    setDateFromValue(dateValue, selector) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || ''));
+        if (!match) {
+            return;
         }
+        const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+        $(selector).calendar('set date', date);
     },
-    
+
+    /**
+     * Format a calendar date as YYYY-MM-DD from its local components, so the picked day
+     * does not depend on the browser timezone.
+     * @param {Date} date - Date picked in the calendar
+     * @returns {string} Date in YYYY-MM-DD format
+     */
+    formatCalendarDate(date) {
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${date.getFullYear()}-${month}-${day}`;
+    },
+
     /**
      * Custom form validation for paired fields
      * @param {object} result - Form data
@@ -1124,17 +1119,15 @@ const outOfWorkTimeRecord = {
             Form.validateRules.timeto.rules = [];
         }
         
-        // Convert dates to timestamps
+        // Send dates as calendar days (YYYY-MM-DD); the PBX applies them in its own timezone
         const dateFrom = outOfWorkTimeRecord.$rangeDaysStart.calendar('get date');
         if (dateFrom) {
-            dateFrom.setHours(0, 0, 0, 0);
-            result.data.date_from = Math.floor(dateFrom.getTime() / 1000).toString();
+            result.data.date_from = outOfWorkTimeRecord.formatCalendarDate(dateFrom);
         }
-        
+
         const dateTo = outOfWorkTimeRecord.$rangeDaysEnd.calendar('get date');
         if (dateTo) {
-            dateTo.setHours(23, 59, 59, 0);
-            result.data.date_to = Math.floor(dateTo.getTime() / 1000).toString();
+            result.data.date_to = outOfWorkTimeRecord.formatCalendarDate(dateTo);
         }
         
         // Collect selected incoming routes

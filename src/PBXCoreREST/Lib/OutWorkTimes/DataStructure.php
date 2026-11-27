@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\OutWorkTimes;
 
+use MikoPBX\Common\Library\OutWorkTimeDate;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\Extensions;
@@ -64,7 +65,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'name' => $model->description ?? 'Time Condition #' . $model->id,
             'description' => $model->description ?? '',
             'calType' => $model->calType ?: 'timeframe',  // Empty string in DB means 'timeframe'
-            // Return dates as-is (timestamps) for API, not formatted for display
+            // Calendar days of the PBX timezone in 'Y-m-d' form
             'date_from' => $model->date_from ?? '',
             'date_to' => $model->date_to ?? '',
             // Return -1 for empty weekday values to match API v3 conventions
@@ -400,35 +401,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Format date for display, handling both unix timestamps and Y-m-d format
+     * Format a stored date ('Y-m-d') for display
      *
-     * @param string $date Date string (could be timestamp or Y-m-d format)
-     * @return string Formatted date in Y-m-d format
+     * @param string $date Stored date
+     * @return string Date in Y-m-d format, or the value as is when it is not a date
      */
     private static function formatDateForDisplay(string $date): string
     {
-        if (empty($date)) {
-            return '';
-        }
-
-        // Check if it's a unix timestamp (numeric string)
-        if (is_numeric($date)) {
-            return date('Y-m-d', (int)$date);
-        }
-
-        // Check if it's already in Y-m-d format
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-            return $date;
-        }
-
-        // Try to parse other date formats
-        $timestamp = strtotime($date);
-        if ($timestamp !== false) {
-            return date('Y-m-d', $timestamp);
-        }
-
-        // Return as-is if we can't parse it
-        return $date;
+        return OutWorkTimeDate::format($date, OutWorkTimeDate::FORMAT);
     }
 
     /**

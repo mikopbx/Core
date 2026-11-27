@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\OutWorkTimes;
 
+use MikoPBX\Common\Library\OutWorkTimeDate;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -82,6 +83,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $recordId = $data['id'] ?? null;
         $incomingRouteIds = $data['incomingRouteIds'] ?? null;
         $allowedExtensions = $data['allowedExtensions'] ?? null;
+        $invalidDates = false;
 
         try {
             // Sanitize: remove dangerous chars, trim whitespace, normalize format
@@ -111,8 +113,32 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $sanitizedData['weekday_to'] = '-1';
             }
 
+            // Dates are stored as 'Y-m-d' days of the PBX timezone; a unix timestamp
+            // from clients of the former format becomes the day it was entered for.
+            $timezone = OutWorkTimeDate::pbxTimezone();
+            foreach (['date_from' => false, 'date_to' => true] as $dateField => $isEnd) {
+                if (!isset($sanitizedData[$dateField])) {
+                    continue;
+                }
+                $date = OutWorkTimeDate::normalize((string)$sanitizedData[$dateField], $timezone, $isEnd);
+                if ($date === null) {
+                    $invalidDates = true;
+                    continue;
+                }
+                $sanitizedData[$dateField] = $date;
+            }
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
+            return $res;
+        }
+
+        if ($invalidDates) {
+            $di = \Phalcon\Di\Di::getDefault();
+            $t = $di !== null ? $di->get(TranslationProvider::SERVICE_NAME) : null;
+            $res->messages['error'][] = $t
+                ? $t->_('tf_ValidateCheckDateInterval')
+                : 'date_from and date_to must be dates in YYYY-MM-DD format';
+            $res->httpCode = 422;
             return $res;
         }
 
@@ -457,11 +483,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     (empty($data['date_from']) && !empty($data['date_to']))) {
                     $errors[] = $t ? $t->_('tf_ValidateDateRangeComplete') : 'Both date_from and date_to must be specified';
                 }
-                // Check if start date is before end date
+                // Check if start date is before end date ('Y-m-d' strings compare in date order)
                 if (!empty($data['date_from']) && !empty($data['date_to'])) {
-                    $startTimestamp = is_numeric($data['date_from']) ? (int)$data['date_from'] : strtotime($data['date_from']);
-                    $endTimestamp = is_numeric($data['date_to']) ? (int)$data['date_to'] : strtotime($data['date_to']);
-                    if ($startTimestamp > $endTimestamp) {
+                    if (strcmp((string)$data['date_from'], (string)$data['date_to']) > 0) {
                         $errors[] = $t ? $t->_('tf_ValidateDateRangeOrder') : 'Start date must be before end date';
                     }
                 }

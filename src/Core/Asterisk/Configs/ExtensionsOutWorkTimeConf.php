@@ -21,6 +21,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Library\OutWorkTimeDate;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
@@ -29,8 +30,9 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use DateTime;
+use DateTimeZone;
 
 /**
  * Class ExtensionsOutWorkTimeConf
@@ -157,7 +159,6 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      * Generates the out-of-work time configurations.
      *
      * @return void
-     * @throws \DateMalformedStringException
      */
     private function generateOutWorkTimes(): void
     {
@@ -178,6 +179,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $routesData = $this->getRoutesData();
         $additionalContexts = '';
         $conf_out_set_var = '';
+        $timezone = OutWorkTimeDate::pbxTimezone();
         $data = OutWorkTimes::find(['order' => 'priority, date_from'])->toArray();
         $this->conf .= "[" . self::OUT_WORK_TIME_CONTEXT . "]" . PHP_EOL;
         $this->conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,Set(currentYear=${STRFTIME(,,%Y)})' . "\n\t";
@@ -196,7 +198,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 $appdata = $this->initRuleAppData($ruleData, $conf_out_set_var);
                 $additionalContexts .= 'same => n,GotoIf(${CALENDAR_BUSY(calendar-' . $ruleData['id'] . ')}?' . $appdata . ')' . PHP_EOL . "\t";
             } else {
-                $this->generateOutWorkRule($ruleData, $conf_out_set_var, $additionalContexts);
+                $this->generateOutWorkRule($ruleData, $timezone, $conf_out_set_var, $additionalContexts);
             }
             $additionalContexts .= 'same => n,return' . PHP_EOL;
             $additionalContexts .= 'exten => _[hit],1,Hangup()' . PHP_EOL;
@@ -263,74 +265,90 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      * Generate the out-of-work rule based on the provided data.
      *
      * @param array $srcOutData The data for the out-of-work rule.
+     * @param DateTimeZone $timezone The PBX timezone the rule dates belong to.
      * @param string  &$conf_out_set_var The output string for the SET variables.
      * @param string  &$conf The output string for the configuration.
      *
      * @return void
-     * @throws \DateMalformedStringException
      */
-    private function generateOutWorkRule(array $srcOutData, string &$conf_out_set_var, string &$conf): void
-    {
-        $intervals = $this->splitIntoMonthlyIntervals($srcOutData['date_from'], $srcOutData['date_to']);
-        if (empty($intervals)) {
-            $timesArray = $this->getTimesInterval($srcOutData);
-            $weekdays   = $this->getWeekDayInterval($srcOutData);
-            [$mDays, $months] = $this->initDaysMonthsInterval($srcOutData);
-            $appdata = $this->initRuleAppData($srcOutData, $conf_out_set_var);
+    private function generateOutWorkRule(
+        array $srcOutData,
+        DateTimeZone $timezone,
+        string &$conf_out_set_var,
+        string &$conf
+    ): void {
+        $timesArray = $this->getTimesInterval($srcOutData);
+        $weekdays   = $this->getWeekDayInterval($srcOutData);
+        $appdata    = $this->initRuleAppData($srcOutData, $conf_out_set_var);
+        $dateClauses = self::getDateClauses(
+            (string)$srcOutData['date_from'],
+            (string)$srcOutData['date_to'],
+            $timezone
+        );
+        if ($dateClauses === null) {
+            // Without its dates the rule would apply every day
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Off-work time rule {$srcOutData['id']} skipped: unreadable dates "
+                . "'{$srcOutData['date_from']}' - '{$srcOutData['date_to']}'",
+                LOG_WARNING
+            );
+            return;
+        }
+        foreach ($dateClauses as $clause) {
             foreach ($timesArray as $times) {
-                $conf .= "same => n,GotoIfTime($times,$weekdays,$mDays,$months?$appdata)\n\t";
-            }
-        } else {
-            foreach ($intervals as $interval) {
-                [$srcOutData['date_from'],$srcOutData['date_to']] = $interval;
-
-                $timesArray = $this->getTimesInterval($srcOutData);
-                $weekdays   = $this->getWeekDayInterval($srcOutData);
-
-                [$mDays, $months] = $this->initDaysMonthsInterval($srcOutData);
-                $appdata = $this->initRuleAppData($srcOutData, $conf_out_set_var);
-
-                $year = 1 * date('Y', $this->convertToTimestamp($srcOutData['date_from']));
-                foreach ($timesArray as $times) {
-                    $timeAppData = "GotoIfTime($times,$weekdays,$mDays,$months?$appdata)";
-                    $conf .= 'same => n,ExecIf($["${currentYear}" == "' . $year . '"]?' . $timeAppData . ')' . "\n\t";
+                $timeAppData = "GotoIfTime($times,$weekdays,{$clause['mDays']},{$clause['months']}?$appdata)";
+                if ($clause['year'] === '') {
+                    $conf .= "same => n,$timeAppData\n\t";
+                } else {
+                    $conf .= 'same => n,ExecIf($["${currentYear}" == "' . $clause['year'] . '"]?'
+                        . $timeAppData . ')' . "\n\t";
                 }
             }
         }
     }
 
     /**
-     * Get intervals from timestamp
-     * @param $date_from
-     * @param $date_to
-     * @return array
-     * @throws \DateMalformedStringException
+     * Returns the date part of the GotoIfTime() rules for a stored date range.
+     *
+     * GotoIfTime() has no year field, so a range is split by month and each part is limited
+     * to its year through ${currentYear}; otherwise "10-12,dec-dec" would match every December.
+     *
+     * @param string $dateFrom Stored date_from ('Y-m-d', '' or a timestamp of the former format).
+     * @param string $dateTo Stored date_to (same forms).
+     * @param DateTimeZone $timezone The PBX timezone the dates belong to.
+     *
+     * @return list<array{year: string, mDays: string, months: string}>|null An empty year means every year;
+     *     null when a date cannot be read.
      */
-    private function splitIntoMonthlyIntervals($date_from, $date_to): array
+    public static function getDateClauses(string $dateFrom, string $dateTo, DateTimeZone $timezone): ?array
     {
-        if (empty($date_from) || empty($date_to)) {
-            return [];
+        $dateFrom = OutWorkTimeDate::normalize($dateFrom, $timezone);
+        $dateTo = OutWorkTimeDate::normalize($dateTo, $timezone, true);
+        if ($dateFrom === null || $dateTo === null) {
+            return null;
         }
-        $intervals = [];
-        $start = new DateTime();
-        $start->setTimestamp($this->convertToTimestamp($date_from));
-        $end = new DateTime();
-        $end->setTimestamp($this->convertToTimestamp($date_to));
-        while ($start < $end) {
-            $interval_start = clone $start;
-            $interval_end = clone $start;
-            $interval_end->modify('last day of this month 23:59:59');
-            if ($interval_end > $end) {
-                $interval_end = $end;
-            }
-            $intervals[] = [
-                $interval_start->getTimestamp(),
-                $interval_end->getTimestamp()
+        $start = OutWorkTimeDate::dayStart($dateFrom, $timezone);
+        if ($start === null) {
+            return [['year' => '', 'mDays' => '*', 'months' => '*']];
+        }
+        $end = OutWorkTimeDate::dayEnd($dateTo, $timezone);
+        if ($end === null) {
+            // A rule without an end date covers its start day in every year.
+            return [['year' => '', 'mDays' => $start->format('j'), 'months' => strtolower($start->format('M'))]];
+        }
+        $clauses = [];
+        while ($start <= $end) {
+            $monthEnd = $start->modify('last day of this month')->setTime(23, 59, 59);
+            $partEnd = $monthEnd < $end ? $monthEnd : $end;
+            $clauses[] = [
+                'year' => $start->format('Y'),
+                'mDays' => $start->format('j') . '-' . $partEnd->format('j'),
+                'months' => strtolower($start->format('M') . '-' . $partEnd->format('M')),
             ];
-            $start->modify('first day of next month 00:00:00');
+            $start = $start->modify('first day of next month')->setTime(0, 0);
         }
-
-        return $intervals;
+        return $clauses;
     }
 
     /**
@@ -434,70 +452,6 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             $weekdays = "$arr_weekday[$weekday_from]-$arr_weekday[$weekday_to]";
         }
         return $weekdays;
-    }
-
-    /**
-     * Initializes the days and months interval based on the provided data.
-     *
-     * @param array $out_data An array containing the date_from and date_to values.
-     *
-     * @return array An array containing the days and months interval.
-     */
-    protected function initDaysMonthsInterval(array $out_data): array
-    {
-        // Extract date_from and date_to values
-        $date_from = $out_data['date_from'];
-        $date_to = $out_data['date_to'];
-        if (empty($date_from)) {
-            // If date_from is empty, set mDays and months to '*'
-            $mDays = '*';
-            $months = '*';
-        } else {
-            // Convert date_from to timestamp first, handling both unix timestamp and Y-m-d format
-            $timestamp_from = $this->convertToTimestamp($date_from);
-            $mDays = strtolower(date("j", $timestamp_from));
-            $months = strtolower(date("M", $timestamp_from));
-            
-            if (!empty($date_to)) {
-                // Convert date_to to timestamp, handling both formats
-                $timestamp_to = $this->convertToTimestamp($date_to);
-                $mDays .= "-" . strtolower(date("j", $timestamp_to));
-                $months .= "-" . strtolower(date("M", $timestamp_to));
-            }
-        }
-        return array($mDays, $months);
-    }
-
-    /**
-     * Convert date string to unix timestamp, handling both timestamp and Y-m-d formats
-     *
-     * @param string $date Date string (could be timestamp or Y-m-d format)
-     * @return int Unix timestamp
-     */
-    protected function convertToTimestamp(string $date): int
-    {
-        if (empty($date)) {
-            return 0;
-        }
-        
-        // Check if it's already a unix timestamp (numeric string)
-        if (is_numeric($date)) {
-            return (int)$date;
-        }
-        
-        // Try to parse as date string
-        $timestamp = strtotime($date);
-        if ($timestamp !== false) {
-            return $timestamp;
-        }
-        
-        // If all else fails, try to extract year from string for basic compatibility
-        if (preg_match('/^(\d{4})/', $date, $matches)) {
-            // This is a fallback - create timestamp for January 1st of the given year
-            return strtotime($matches[1] . '-01-01');
-        }
-        
-        return 0;
     }
 
     public function generateModulesConf(): string

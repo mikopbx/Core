@@ -174,6 +174,9 @@ class TestOffWorkTimes:
         assert 'action' in record
         assert 'weekday_from' in record
         assert 'weekday_to' in record
+        # Dates come back as the calendar days that were sent (test_02)
+        assert record['date_from'] == '2025-01-01', f"date_from: {record['date_from']}"
+        assert record['date_to'] == '2025-01-05', f"date_to: {record['date_to']}"
 
         print(f"✓ Retrieved off-work-time: {record.get('description', 'N/A')}")
         print(f"  Action: {record.get('action', 'N/A')}")
@@ -373,18 +376,46 @@ class TestOffWorkTimesEdgeCases:
 
         try:
             response = api_client.post('off-work-times', invalid_data)
-            if not response['result']:
-                print(f"✓ Invalid date format rejected")
-            else:
-                # Cleanup if accepted
-                if 'id' in response['data']:
-                    api_client.delete(f"off-work-times/{response['data']['id']}")
-                print(f"⚠ Invalid date format accepted (lenient validation)")
         except Exception as e:
-            if '422' in str(e) or '400' in str(e):
-                print(f"✓ Invalid date format rejected via HTTP error")
-            else:
-                print(f"⚠ Unexpected error: {str(e)[:50]}")
+            if '422' in str(e):
+                print(f"✓ Invalid date format rejected via HTTP 422")
+                return
+            raise
+        if response['result'] and 'id' in response.get('data', {}):
+            api_client.delete(f"off-work-times/{response['data']['id']}")
+        assert response['result'] is False, "Date in a format other than YYYY-MM-DD must be rejected"
+        assert response.get('httpCode') == 422, f"Expected 422, got {response.get('httpCode')}"
+        print(f"✓ Invalid date format rejected")
+
+    def test_02a_timestamp_dates_are_stored_as_days(self, api_client, audio_file_fixtures):
+        """Unix timestamps from clients of the former format are stored as YYYY-MM-DD"""
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+
+        sound = audio_file_fixtures.get('miko_hello.audio', {'id': '1'})
+        settings = api_client.get('time-settings')
+        assert_api_success(settings, "Failed to get time settings")
+        pbx_zone = ZoneInfo(settings['data']['PBXTimezone'])
+
+        # An arbitrary moment (not a midnight the former form produced) keeps its PBX day
+        timestamp = 1749991061  # 2025-06-15 12:37:41 UTC
+        expected = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(pbx_zone).strftime('%Y-%m-%d')
+        response = api_client.post('off-work-times', {
+            'description': 'Timestamp Dates',
+            'date_from': str(timestamp),
+            'date_to': str(timestamp),
+            'action': 'playmessage',
+            'audio_message_id': sound['id']
+        })
+        assert_api_success(response, "Failed to create off-work-time with timestamp dates")
+        time_id = response['data']['id']
+        try:
+            record = assert_record_exists(api_client, 'off-work-times', time_id)
+            assert record['date_from'] == expected, f"date_from: {record['date_from']}, expected {expected}"
+            assert record['date_to'] == expected, f"date_to: {record['date_to']}, expected {expected}"
+            print(f"✓ Timestamp dates stored as {record['date_from']} ({pbx_zone})")
+        finally:
+            api_client.delete(f'off-work-times/{time_id}')
 
     def test_03_get_nonexistent_time(self, api_client):
         """Test GET /off-work-times/{id} with non-existent ID"""
