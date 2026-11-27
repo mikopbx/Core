@@ -179,11 +179,6 @@ const timeSettingsModify = {
         // Convert checkbox value to boolean for API
         result.data.PBXManualTimeSettings = (result.data.PBXManualTimeSettings === 'on');
 
-        // Add user timezone for manual time setting
-        if (result.data.PBXManualTimeSettings === '1' && result.data.ManualDateTime) {
-            result.data.userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        }
-
         return result;
     },
 

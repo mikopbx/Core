@@ -20,8 +20,6 @@
 
 namespace MikoPBX\Core\System;
 
-use DateTime;
-use DateTimeZone;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
@@ -89,44 +87,22 @@ class System extends Injectable
     }
 
     /**
-     * Sets the system date and time based on timestamp and timezone.
+     * Sets the system clock to a unix timestamp and stores it in the hardware clock.
      *
-     * @param int    $timeStamp - Unix timestamp.
-     * @param string $remote_tz - Timezone string.
+     * The timestamp is absolute, so neither the PBX nor the browser timezone takes part.
      *
-     * @return bool
-     * @throws \Exception
+     * @param int $timeStamp Unix timestamp.
+     *
+     * @return bool True when the system clock was set.
      */
-    public static function setDate(int $timeStamp, string $remote_tz): bool
+    public static function setDate(int $timeStamp): bool
     {
         $date = Util::which('date');
-
-        // Fetch timezone from database
-        $db_tz = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
-        $origin_tz = '';
-
-        // Read existing timezone from file if it exists
-        if (file_exists('/etc/TZ')) {
-            $origin_tz = file_get_contents("/etc/TZ");
+        $hwclock = Util::which('hwclock');
+        if (Processes::mwExec("$date -s @$timeStamp") !== 0) {
+            return false;
         }
-
-        // If the timezones are different, configure the timezone
-        if ($origin_tz !== $db_tz) {
-            self::timezoneConfigure();
-        }
-
-        // Calculate the time offset and set the system time
-        $origin_tz = $db_tz;
-        $origin_dtz = new DateTimeZone($origin_tz);
-        $remote_dtz = new DateTimeZone($remote_tz);
-        $origin_dt  = new DateTime('now', $origin_dtz);
-        $remote_dt  = new DateTime('now', $remote_dtz);
-        $offset     = $origin_dtz->getOffset($origin_dt) - $remote_dtz->getOffset($remote_dt);
-        $timeStamp  = $timeStamp - $offset;
-
-        // Execute date command to set system time
-        Processes::mwExec("$date +%s -s @$timeStamp");
-
+        Processes::mwExec("$hwclock -w");
         return true;
     }
 

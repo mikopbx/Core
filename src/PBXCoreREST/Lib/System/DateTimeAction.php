@@ -40,8 +40,15 @@ class DateTimeAction extends Injectable
             $res->data['timestamp'] = time();
         } elseif ($httpMethod === 'PUT') {
             $timeStamp = intval($data['timestamp'] ?? 0);
-            $userTimeZone = $data['userTimeZone'] ?? null;
-            $res->success = System::setDate($timeStamp, $userTimeZone);
+            if ($timeStamp <= 0) {
+                $res->messages['error'][] = 'timestamp must be a positive unix timestamp';
+                $res->httpCode = 422;
+                return $res;
+            }
+            $res->success = System::setDate($timeStamp);
+            if (!$res->success) {
+                $res->messages['error'][] = 'Failed to set the system time';
+            }
         } else {
             $res->messages['error'][] = "Invalid HTTP method for datetime: $httpMethod";
         }

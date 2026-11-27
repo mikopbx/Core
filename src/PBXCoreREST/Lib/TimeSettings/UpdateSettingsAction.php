@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\TimeSettings;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\TimeSettings\DataStructure;
@@ -131,6 +133,7 @@ class UpdateSettingsAction
             }
 
             // Handle manual date/time setting if provided
+            $systemTimeSet = true;
             if (isset($data['ManualDateTime']) && !empty($data['ManualDateTime'])) {
                 // Check if manual time is enabled (expecting boolean from API)
                 $manualTimeEnabled = isset($data[PbxSettings::PBX_MANUAL_TIME_SETTINGS])
@@ -139,7 +142,11 @@ class UpdateSettingsAction
 
                 if ($manualTimeEnabled) {
                     // Update system time
-                    self::updateSystemTime($data['ManualDateTime'], $data['userTimeZone'] ?? null);
+                    // The form shows the time in the timezone being saved; the PHP default
+                    // timezone still holds the previous one until the reload after commit.
+                    $timezone = (string)(($data[PbxSettings::PBX_TIMEZONE] ?? '')
+                        ?: PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE));
+                    $systemTimeSet = self::updateSystemTime((string)$data['ManualDateTime'], $timezone);
                 }
             }
 
@@ -150,6 +157,10 @@ class UpdateSettingsAction
 
             $res->success = true;
             $res->data = ['message' => 'Time settings updated successfully'];
+            if (!$systemTimeSet) {
+                // E.g. a container without CAP_SYS_TIME: the settings are saved, the clock is not
+                $res->messages['warning'][] = 'Failed to set the system time';
+            }
 
         } catch (\Exception $e) {
             if (isset($db) && $db->isUnderTransaction()) {
@@ -178,23 +189,48 @@ class UpdateSettingsAction
     /**
      * Update system time
      *
-     * @param string $dateTime The date/time string to set
-     * @param string|null $userTimeZone The user's timezone
+     * @param string $dateTime The date/time entered in the form, "Y-m-d H:i:s" or ISO 8601
+     * @param string $timezone The PBX timezone the date/time is given in
+     * @return bool True when the system clock was set
+     * @throws \Exception When the date/time or the timezone cannot be read
      */
-    private static function updateSystemTime(string $dateTime, ?string $userTimeZone): void
+    private static function updateSystemTime(string $dateTime, string $timezone): bool
     {
-        // Convert to timestamp
-        $timestamp = strtotime($dateTime);
-        if ($timestamp === false) {
+        $timestamp = self::manualDateTimeToTimestamp($dateTime, $timezone);
+        if (System::setDate($timestamp)) {
+            return true;
+        }
+        SystemMessages::sysLogMsg(__CLASS__, "Failed to set the system time to @$timestamp", LOG_WARNING);
+        return false;
+    }
+
+    /**
+     * Converts the manually entered date/time to a unix timestamp.
+     *
+     * A value without an offset is read in $timezone, not in the PHP default timezone,
+     * which lags behind when the timezone changes in the same request.
+     *
+     * @param string $dateTime "Y-m-d H:i:s", or ISO 8601 with or without an offset
+     * @param string $timezone IANA timezone name
+     * @return int Unix timestamp
+     * @throws \Exception When the date/time or the timezone cannot be read
+     */
+    public static function manualDateTimeToTimestamp(string $dateTime, string $timezone): int
+    {
+        try {
+            $zone = new DateTimeZone($timezone);
+        } catch (\Exception) {
+            throw new \Exception("Invalid timezone: $timezone");
+        }
+        try {
+            $parsed = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', trim($dateTime), $zone);
+            if ($parsed === false) {
+                $parsed = new DateTimeImmutable(trim($dateTime), $zone);
+            }
+        } catch (\Exception) {
             throw new \Exception("Invalid date/time format: $dateTime");
         }
-
-        // Execute system time update
-        $command = "date -s '@{$timestamp}'";
-        Processes::mwExec($command);
-
-        // Sync hardware clock
-        Processes::mwExec('/sbin/hwclock -w');
+        return $parsed->getTimestamp();
     }
 
     /**
