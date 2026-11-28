@@ -33,7 +33,7 @@ class PBXSettingsDataFactory
             PbxSettings::PBX_DESCRIPTION => 'log: admin  pass: 123456789MikoPBX#1 last test:{date}',
             PbxSettings::PBX_LANGUAGE => 'en-en',
             PbxSettings::PBX_RECORD_CALLS => true,
-            PbxSettings::SEND_METRICS => false,
+            PbxSettings::SEND_METRICS => true,
             PbxSettings::SSH_AUTHORIZED_KEYS => '{SSH_RSA_KEYS_SET}',
             'codec_alaw' => true,
             'codec_ulaw' => false,

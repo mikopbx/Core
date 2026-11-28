@@ -104,6 +104,7 @@ run_container() {
         -e "SSH_DISABLE_SSH_PASSWORD=0" \
         -e "AUTO_UPDATE_EXTERNAL_IP=0" \
         -e "SEND_METRICS=0" \
+        -e "MIKOPBX_DEBUG=1" \
         -e "PBX_FIREWALL_ENABLED=1" \
         -e "PBX_FAIL2BAN_ENABLED=1" \
         -e "SSH_PORT=8023" \
